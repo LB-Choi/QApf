@@ -32,9 +32,6 @@
  ├── 📂 BlueArchive          # 대상 게임 프로젝트
  │  ├── 📂 Document          # 테스트 계획서 (범위, 일정, 전략)
  │  ├── 📂 TestCase         # Zephyr 스타일로 작성된 TC 모음
- │  │   ├── 📄 [TC-PRE-01] 편성 및 Drag & Drop.md
- │  │   ├── 📄 [TC-PRE-02] 조력자 대여.md
- │  │   └── 📄 [TC-PRE-03] 타 유저 편성 복사.md
  │  └── 📂 BugReport        # 발견된 결함 리포트 (GitHub Issues 백업)
  └── 📄 README.md            # Project Landig Page
 
@@ -55,6 +52,5 @@
 ```text
  ├── 📂 Automation
  │  ├── 📂 tests             # 테스트 시나리오 파일 (.spec.ts)
- │  ├── 📂 pages             # Page Object Classes (POM)
- │  ├── 📂 data              # 테스트용 데이터 세트 (JSON)
+ │  ├── 📂 public            # 로컬 서버용 HTML
  │  └── 📄 playwright.config.ts # 실행 환경 설정
