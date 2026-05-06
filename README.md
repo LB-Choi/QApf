@@ -26,18 +26,24 @@
 | **Expected Result** | `Expected` | 기획서에 명시된 정상 동작 기준 |
 | **Execution Status**| `Pass/Fail` | 테스트 수행 결과 시각화 |
 
-## 🤖 Test Automation (Playwright)
-수동 테스트의 한계를 극복하고 회귀 테스트(Regression Test)의 효율성을 높이기 위해 **Playwright**를 활용한 E2E 자동화 스크립트를 구현했습니다.
+🤖 Test Automation (Playwright)
+실서비스 환경의 데이터 무결성을 보존하고, 서비스 운영에 영향을 주지 않는 안전한 검증을 위해 로컬 테스트 환경 기반의 Playwright E2E 자동화 스크립트를 구현했습니다.
 
-### 🎯 Automation Focus
-*   **Page Object Model (POM)**: 유지보수성을 극대화하기 위해 페이지 구조와 테스트 로직을 분리하여 설계
-*   **Data-Driven Testing**: 다양한 사용자 시나리오를 JSON/CSV 데이터를 통해 반복 검증
-*   **Multi-Browser Testing**: Chromium, Firefox, Webkit 등 멀티 브라우저 환경에서의 호환성 체크
+🎯 Automation Focus
 
-### 💻 Tech Stack
-*   **Language**: TypeScript
-*   **Framework**: Playwright Test
-*   **Report**: Playwright HTML Reporter / Allure Report
+Production Safety (Zero-Impact): 실서버(Live Server) 결제 데이터 오염, 어뷰징 감지 및 트래픽 부하를 원천 차단하기 위해, 로컬 호스트 환경에 독립적인 Mock UI를 구축하여 안전하게 테스트 수행
+
+Stable Element Selection: UI 레이아웃이나 CSS 클래스 변경 시 스크립트가 깨지는 현상(Flaky Tests)을 방지하기 위해, DOM 구조에 의존하지 않는 data-testid 기반의 안정적인 셀렉터 설계
+
+State Mocking & Verification: 실제 백엔드 연동 없이 프론트엔드 환경에서 결제 흐름을 검증하기 위해, Web Storage(localStorage)를 활용하여 페이지 간 상태(잔액 증감) 변화를 모방하고 데이터 무결성 검증
+
+💻 Tech Stack
+
+Language: TypeScript
+
+Framework: Playwright Test
+
+Environment: Localhost / Mock HTML & Web Storage
 
 ## 📂 Repository Structure
 ```text
