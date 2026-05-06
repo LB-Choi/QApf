@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>넥슨캐시 충전하기 (로컬 Mock UI)</title>   
+
+    <style>
+        /* 넥슨 결제창 UI를 모방한 로컬 독립형 CSS */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; }
+        body { background-color: #e9ecef; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        
+        .wrapper { width: 840px; background: #fff; border: 1px solid #111; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .header { padding: 30px; border-bottom: 2px solid #333; }
+        .header h1 { font-size: 24px; color: #111; margin-bottom: 20px; }
+        
+        .cashChargeInfo { display: flex; justify-content: space-between; align-items: flex-start; background: #f8f9fa; padding: 25px; border: 1px solid #dee2e6; }
+        
+        /* 금액 입력 및 버튼 영역 */
+        .cashTxtSec { width: 60%; }
+        .inputTxtSec input { width: 100%; padding: 15px; font-size: 20px; font-weight: bold; color: #ff5e00; border: 2px solid #333; text-align: right; margin-bottom: 15px; }
+        .inputTxtSec input::placeholder { color: #bbb; font-weight: normal; }
+        .layerCashlist { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
+        .layerCashlist li { flex: 1 1 calc(25% - 8px); }
+        .layerCashlist button { width: 100%; padding: 12px 0; border: 1px solid #ccc; background: #fff; font-size: 14px; cursor: pointer; transition: 0.2s; }
+        .layerCashlist button:hover { border-color: #333; font-weight: bold; }
+        
+        /* 상태 표시 영역 */
+        dl { width: 35%; background: #fff; padding: 20px; border: 1px solid #ccc; border-radius: 4px; }
+        dt { font-size: 13px; color: #666; margin-bottom: 5px; }
+        dd { font-size: 22px; font-weight: bold; margin-bottom: 15px; text-align: right; }
+        dd#cashAfter { color: #ff5e00; }
+
+        /* 하단 결제 영역 */
+        .content { padding: 30px; }
+        .cntsTit h2 { font-size: 18px; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .nxCharge { background: #f8f9fa; padding: 20px; border: 1px solid #dee2e6; text-align: center; }
+        .payTit button { font-size: 16px; font-weight: bold; border: none; background: transparent; padding: 10px; margin-bottom: 20px; }
+        .bt1 { background: #ff5e00; color: #fff; font-size: 18px; font-weight: bold; padding: 15px 60px; border: none; cursor: pointer; border-radius: 4px; }
+        .bt1:hover { background: #e05300; }
+    </style>
+</head>
+<body>
+
+    <div class="wrapper">
+        <div class="header">
+            <h1>넥슨캐시충전</h1>
+            <div class="cashChargeInfo">
+                
+                <div id="divTotalPayAmount" class="cashTxtSec">
+                    <div class="inputTxtSec">
+                        <input id="txtTotalPayAmount" type="text" value="0" readonly placeholder="금액입력" data-testid="charge-input">
+                    </div>
+                    <ul class="layerCashlist">
+                        <li><button type="button" data-amount="1000">1,000</button></li>
+                        <li><button type="button" data-amount="3000">3,000</button></li>
+                        <li><button type="button" data-amount="5000">5,000</button></li>
+                        <li><button type="button" data-amount="10000">10,000</button></li>
+                        <li><button type="button" data-amount="30000">30,000</button></li>
+                        <li><button type="button" data-amount="50000" data-testid="btn-50k">50,000</button></li>
+                        <li><button type="button" data-amount="100000">100,000</button></li>
+                    </ul>
+                </div>
+
+                <dl>
+                    <dt>보유 넥슨캐시</dt>
+                    <dd id="cashRemain">3,200</dd>
+
+                    <dt>충전 후 넥슨캐시</dt>
+                    <dd id="cashAfter" data-testid="cash-after">3,200</dd>
+                </dl>
+            </div>
+        </div>
+        
+        <div class="content nxChargeOn">
+            <div class="cntsTit">
+                <h2>결제수단</h2>
+            </div>
+            <div class="nxCharge">
+                <p class="payTit"><button type="button">신한 (일시불)</button></p>
+                <p class="payBt">
+                    <button type="button" name="btnSubmitPayment" class="bt1" data-testid="submit-payment-btn">결제 진행하기</button>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- UI 동작을 제어하는 로컬 자바스크립트 -->
+<script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. localStorage에서 기존 캐시 불러오기 (없으면 0원)
+        let currentCash = parseInt(localStorage.getItem('nexon_cash') || '0', 10);
+        let selectedAmount = 0; // 선택된 충전 금액
+
+        const inputField = document.getElementById('txtTotalPayAmount');
+        const cashRemainField = document.getElementById('cashRemain');
+        const afterCashField = document.getElementById('cashAfter');
+
+        // 화면 로드 시 현재 보유 캐시 표시
+        cashRemainField.innerText = currentCash.toLocaleString();
+        afterCashField.innerText = currentCash.toLocaleString();
+
+        // 2. 빠른 금액 선택 버튼 이벤트
+        document.querySelectorAll('.layerCashlist button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                selectedAmount = parseInt(e.target.getAttribute('data-amount') || '0', 10);
+                if(selectedAmount > 0) {
+                    inputField.value = selectedAmount.toLocaleString();
+                    // 기존 캐시에 선택한 금액 합산하여 표시
+                    afterCashField.innerText = (currentCash + selectedAmount).toLocaleString();
+                }
+            });
+        });
+
+        // 3. 최종 결제 버튼 클릭 시나리오
+        const submitBtn = document.querySelector('button[name="btnSubmitPayment"]');
+        submitBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            if(selectedAmount === 0) {
+                alert('충전할 금액을 선택해주세요.');
+                return;
+            }
+
+            // 스토리지에 변경된 캐시 잔액 저장
+            currentCash += selectedAmount;
+            localStorage.setItem('nexon_cash', currentCash.toString());
+
+            alert('가상 결제가 성공적으로 처리되었습니다.');
+            // 메인 페이지(QA 테스트 영역)로 돌아갑니다.
+            window.location.href = './index.html'; 
+        });
+    });
+</script>
+
+</body>
+</html>

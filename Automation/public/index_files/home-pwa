@@ -1,0 +1,2535 @@
+/* 축소하지 못했습니다. 축소되지 않은 콘텐츠를 반환합니다.
+(2526,7-8): run-time error JS1014: Invalid character: `
+(2526,13-14): run-time error JS1193: Expected ',' or ')': :
+(2529,5-6): run-time error JS1195: Expected expression: )
+ */
+// defendency : jquery 3.3.1
+if (!String.prototype.includes) {
+    Object.defineProperty(String.prototype, "includes", {
+        enumerable: false,
+        writable: true,
+        value: function (search, start) {
+            'use strict';
+            if (typeof start !== 'number') {
+                start = 0;
+            }
+
+            if (start + search.length > this.length) {
+                return false;
+            } else {
+                return this.indexOf(search, start) !== -1;
+            }
+        }
+    });
+}
+if (!Array.prototype.includes) {
+    Object.defineProperty(Array.prototype, "includes", {
+        enumerable: false,
+        writable: true,
+        value: function (searchElement /*, fromIndex*/) {
+            'use strict';
+            var O = Object(this);
+            var len = parseInt(O.length) || 0;
+            if (len === 0) {
+                return false;
+            }
+            var n = parseInt(arguments[1]) || 0;
+            var k;
+            if (n >= 0) {
+                k = n;
+            } else {
+                k = len + n;
+                if (k < 0) { k = 0; }
+            }
+            var currentElement;
+            while (k < len) {
+                currentElement = O[k];
+                if (searchElement === currentElement ||
+                    (searchElement !== searchElement && currentElement !== currentElement)) { // NaN !== NaN
+                    return true;
+                }
+                k++;
+            }
+            return false;
+        }
+    });
+}
+
+(function (name, definition) {
+    this[name] = definition();
+})('HomeHelper', function () {
+    var HomeHelper = {};
+
+    HomeHelper.getMemberSN = function () {
+        var membersn = 0;
+        var memberinfo = $OASIS.Cookie.get('NXCH');
+        if (memberinfo) {
+            for (var i = 0; i < memberinfo.split('&').length; i++) {
+                var val = memberinfo.split('&')[i];
+                if (val.indexOf("OID") > -1) {
+                    membersn = val.split('=')[1];
+                }
+            }
+        }
+        return membersn;
+    };
+
+    HomeHelper.isEdge = function () {
+        var agent = navigator.userAgent.toLowerCase();
+        return ((agent.indexOf('chrome') !== -1) && (agent.indexOf('edg') !== -1)) ? true : false;
+    }
+
+    HomeHelper.isIE = function () {
+        var agent = window.navigator.userAgent;
+        var ieReg = /msie|Trident.*rv[ :]*11\./gi;
+        return ieReg.test(agent);
+    }
+
+    HomeHelper.subStringByByte = function (str, maxByte) {
+        var isMax = false;
+        for (b = i = 0; c = str.charCodeAt(i);) {
+            b += c >> 7 ? 2 : 1;
+            if (b > maxByte) {
+                isMax = true;
+                break;
+            }
+            i++;
+        }
+        return str.substring(0, i) + (isMax ? "..." : "");
+    }
+
+    return HomeHelper;
+});
+
+(function (name, definition) {
+    this[name] = definition();
+})('Home', function () {
+    var obj = {};
+    obj.domain = {
+        oasisapi: $('#contents').data('oasisurl'),
+        myapi: $('#contents').data('myapiurl'),
+        resourceurl: $('.recommendGame ul').data('resourceurl'),
+        mverseapi: $('#contents').data('mverseapiurl'),
+        mverseurl: $('#contents').data('mverseurl'),
+        primeurl: $('#contents').data('primeurl'),
+        memberurl: $('#contents').data('memberurl'),
+        noticeurl: $('#contents').data('noticeurl'),
+        boxurl: $('#contents').data('boxurl')
+    };
+    obj.setting = {
+        timeout: 10000
+    };
+    return obj;
+});
+
+(function (context, name, definition) {
+    context[name] = definition;
+})(window.Home, 'init', function () {
+    var homeContext = window.Home;
+    homeContext.Components = {};
+    var homeComponents = homeContext.Components;
+
+    homeComponents['Storage'] = (function () {
+        var storage = {
+            homeBannerData: {
+                data: {
+                    bannerList: []
+                },
+                fetchData: function (cb) {
+                    $.ajax({
+                        url: homeContext.domain.oasisapi + "/promotion/homebannerlist",
+                        dataType: 'json',
+                        type: 'GET',
+                        timeout: homeContext.setting.timeout,
+                        xhrFields: { withCredentials: true }
+                    }).done(function (res) {
+                        cb('homeBannerData', res);
+                    }).fail(function (err) {
+                        cb('homeBannerData', null);
+                    });
+                },
+                subscribers: []
+            },
+            mainData: {
+                data: {
+                    gameList: [],
+                    genreList: [],
+                    hashTagList: []
+                },
+                fetchData: function (cb) {
+                    var mainListData = $OASIS.SessionStorage.get('mainData', true);
+                    if (!mainListData) {
+                        $.ajax({
+                            url: homeContext.domain.oasisapi + "/game/mainlist",
+                            type: 'GET',
+                            dataType: 'json',
+                            timeout: homeContext.setting.timeout
+                        }).done(function (res) {
+                            $OASIS.SessionStorage.set('mainData', res, true, 10);
+                            cb('mainData', res);
+                        }).fail(function (jqXHR, textStatus, errorThrown) {
+                            $.ajax({
+                                url: homeContext.domain.resourceurl + "/game/js/maininfo.json",
+                                dataType: 'json',
+                                type: 'GET',
+                                timeout: homeContext.setting.timeout
+                            }).done(function (res) {
+                                cb('mainData', res);
+                            }).fail(function (jqXHR, textStatus, errorThrown) {
+                                cb('mainData', null);
+                            });
+                        });
+                    } else {
+                        cb('mainData', mainListData);
+                    }
+                },
+                subscribers: []
+            },
+            newGameData: {
+                data: {
+                    appSNList: []
+                },
+                fetchData: function (cb) {
+                    var newGameListData = $OASIS.SessionStorage.get('newGameListN', true);
+                    if (!newGameListData) {
+                        $.ajax({
+                            url: homeContext.domain.oasisapi + "/game/newgamelist",
+                            type: 'GET',
+                            dataType: 'json',
+                            timeout: homeContext.setting.timeout
+                        }).done(function (res) {
+                            $OASIS.SessionStorage.set('newGameListN', res, true, 10);
+                            cb('newGameData', res);
+                        });
+                    }
+                    else {
+                        cb('newGameData', newGameListData);
+                    }
+                },
+                subscribers: []
+            },
+            noticeData: {
+                data: {
+                    noticeList: []
+                },
+                fetchData: function (cb) {
+                    var noticeListData = $OASIS.SessionStorage.get('noticeData', true);
+                    if (!noticeListData) {
+                        $.ajax({
+                            url: homeContext.domain.oasisapi + "/notice/noticelist",
+                            type: 'GET',
+                            dataType: 'json',
+                            timeout: homeContext.setting.timeout
+                        }).done(function (res) {
+                            $OASIS.SessionStorage.set('noticeData', res, true, 10);
+                            cb('noticeData', res);
+                        });
+                    } else {
+                        cb('noticeData', noticeListData);
+                    }
+                },
+                subscribers: []
+            },
+            accountData: {
+                data: {
+                    MemberSN: 0,
+                    UserNick: '',
+                    LastLoginedDateTime: '',
+                    LoginHistory: '',
+                    MyInfoUrl: ''
+                },
+                fetchData: function (cb) {
+                    $.ajax({
+                        url: homeContext.domain.oasisapi + "/account/info",
+                        dataType: 'json',
+                        type: 'GET',
+                        timeout: homeContext.setting.timeout,
+                        xhrFields: { withCredentials: true }
+                    }).done(function (res) {
+                        cb('accountData', res);
+                    }).fail(function (jqXHR, textStatus, errorThrown) {
+                        cb('accountData', null);
+                    });;
+                },
+                subscribers: []
+            },
+            accountCashData: {
+                data: {
+                    CashBalance: '-',
+                    PointBalance: '-',
+                    CashUrl: ''
+                },
+                fetchData: function (cb) {
+                    $.ajax({
+                        url: homeContext.domain.oasisapi + "/account/cashinfo",
+                        dataType: 'json',
+                        type: 'GET',
+                        timeout: homeContext.setting.timeout,
+                        xhrFields: { withCredentials: true }
+                    }).done(function (res) {
+                        cb('accountCashData', res);
+                    });
+                },
+                subscribers: []
+            },
+            myInfoData: {
+                data: {
+
+                },
+                fetchData: function (cb) {
+                    var sn = this.params.sn;
+                    var myInfo = $OASIS.SessionStorage.get('Info_' + sn, true);
+                    if (!myInfo) {
+                        $.ajax({
+                            url: homeContext.domain.myapi + "/my/myinfo?st=sso",
+                            dataType: 'json',
+                            type: 'GET',
+                            timeout: homeContext.setting.timeout,
+                            xhrFields: { withCredentials: true }
+                        }).done(function (res) {
+                            $OASIS.SessionStorage.set('Info_' + sn, res, true, 60);
+                            cb('myInfoData', res);
+                        });
+                    } else {
+                        cb('myInfoData', myInfo)
+                    }
+                },
+                subscribers: [],
+                params: {}
+            },
+            recommendGameData: {
+                data: {
+                    
+                },
+                fetchData: function (cb) {
+                    var sn = this.params.sn;
+                    var ssKey = (sn == '' || sn == '0') ? 'recommendGame' : 'recommendGame_' + sn;
+                    var recommendGame = $OASIS.SessionStorage.get(ssKey, true);
+                    if (!recommendGame) {
+                        $.ajax({
+                            url: homeContext.domain.myapi + "/v2/mygame/mygamelist?st=sso",
+                            dataType: 'json',
+                            type: 'GET',
+                            timeout: homeContext.setting.timeout,
+                            xhrFields: { withCredentials: true }
+                        }).done(function (res) {
+                            $OASIS.SessionStorage.set(ssKey, res, true, 60);
+                            if (ssKey != 'recommendGame') {
+                                $OASIS.SessionStorage.set('GNB_MyGame_' + sn, res, true, 60);
+                            }
+                            cb('recommendGameData', res);
+                        }).fail(function (jqXHR, textStatus, errorThrown) {
+                            cb('recommendGameData', null);
+                        });
+                    } else {
+                        cb('recommendGameData', recommendGame);
+                    }
+                },
+                subscribers: [],
+                params: {}
+            },
+            myNoticeData: {
+                data: {
+                    myNoticeList: []
+                },
+                fetchData: function (cb) {
+                    var sn = this.params.sn;
+                    var myNoticeGameCode = this.params.mynoticegamecode;
+                    var myNotice = $OASIS.SessionStorage.get('myNotice_' + sn, true);
+                    if (!myNotice) {
+                        $.ajax({
+                            url: homeContext.domain.oasisapi + "/notice/mynoticelist",
+                            data: 'mygames=' + JSON.stringify(myNoticeGameCode),
+                            dataType: 'json',
+                            type: 'GET',
+                            timeout: homeContext.setting.timeout,
+                            xhrFields: { withCredentials: true }
+                        }).done(function (res) {
+                            $OASIS.SessionStorage.set('myNotice_' + sn, res, true, 60);
+                            cb('myNoticeData', res);
+                        }).fail(function (err) {
+                            cb('myNoticeData', null);
+                        });
+                    } else {
+                        cb('myNoticeData', myNotice);
+                    }
+                },
+                subscribers: [],
+                params: {}
+            },
+            myRecentGameData: {
+                data: {
+                    recentList: []
+                },
+                fetchData: function (cb) {
+                    var sn = this.params.sn;
+                    var myRecentGame = $OASIS.SessionStorage.get('myRecentGame_' + sn, true);
+                    if (!myRecentGame) {
+                        $.ajax({
+                            url: homeContext.domain.myapi + "/live/getrecentgamelist?st=sso",
+                            dataType: 'json',
+                            type: 'GET',
+                            timeout: homeContext.setting.timeout,
+                            xhrFields: { withCredentials: true }
+                        }).done(function (res) {
+                            $OASIS.SessionStorage.set('myRecentGame_' + sn, res, true, 60);
+                            cb('myRecentGameData', res);
+                        });
+                    } else {
+                        cb('myRecentGameData', myRecentGame);
+                    }
+                },
+                subscribers: [],
+                params: {}
+            },
+            couponUrlData: {
+                data: {
+
+                },
+                fetchData: function (cb) {
+                    $.ajax({
+                        url: Home.domain.myapi + "/coupons/url",
+                        type: 'GET',
+                        dataType: 'json',
+                        xhrFields: { withCredentials: true },
+                        timeout: homeContext.setting.timeout,
+                    }).done(function (data) {
+                        if (data && data.CouponBoxUrl) {
+                            cb('couponUrlData', data.CouponBoxUrl);
+                        }
+                        else cb('couponUrlData', null);
+                    }).fail(function (err) {
+                        cb('couponUrlData', null);
+                    })
+                },
+                subscribers: []
+            }
+        };
+
+        storage.addSubscriber = function (data) {
+            storage[data.label].subscribers.push(data.callback);
+        };
+
+        storage.addParam = function (data) {
+            storage[data.label].params[data.key] = data.value;
+        };
+
+        function notifier(label, fetchedData) {
+            var subscribers = storage[label].subscribers;
+            storage[label].data = fetchedData;
+            for (var i = 0, length = subscribers.length; i < length; i++) {
+                subscribers[i](fetchedData);
+            }
+        };
+
+        storage.fetchData = function (label) {
+            storage[label].fetchData(notifier);
+        };
+
+        storage.getData = function (label) {
+            var target = storage[label];
+            if (!target) {
+                return null;
+            }
+            return target.data;
+        };
+
+        return storage;
+    })();
+});
+
+window.Home.init();;
+var defaultRecommendData = {
+	MyGameInfo: {
+		MemberSN: 0,
+		MyGameType: 1
+	},
+	MyGames: [
+		{ GameCode: 74257, RecommendDetail: '#요즘 제일 인기있는', FeatureID: 0 }, //던전앤파이터
+		{ GameCode: 589824, RecommendDetail: '#요즘 제일 인기있는', FeatureID: 0 }, //메이플스토리
+		{ GameCode: 106566, RecommendDetail: '#요즘 제일 인기있는', FeatureID: 0 }, //FIFA 온라인4
+		{ GameCode: 106628, RecommendDetail: '#요즘 제일 인기있는', FeatureID: 0 }, //던전앤파이터 모바일
+		{ GameCode: 106656, RecommendDetail: '#요즘 제일 인기있는', FeatureID: 0 }, //메이플스토리M
+		{ GameCode: 106615, RecommendDetail: '#요즘 제일 인기있는', FeatureID: 0 }, //바람의나라: 연
+		{ GameCode: 94227, RecommendDetail: '#요즘 제일 인기있는', FeatureID: 0 }, //서든어택
+		{ GameCode: 1000154, RecommendDetail: '#요즘 제일 인기있는', FeatureID: 0 }, //FIFA 모바일
+		{ GameCode: 74245, RecommendDetail: '#요즘 제일 인기있는', FeatureID: 0 }, //마비노기
+		{ GameCode: 73737, RecommendDetail: '#요즘 제일 인기있는', FeatureID: 0 }, //카운터-스트라이크 온라인
+		{ GameCode: 106597, RecommendDetail: '#요즘 제일 인기있는', FeatureID: 0 }, //V4
+		{ GameCode: 94224, RecommendDetail: '#요즘 제일 인기있는', FeatureID: 0 }, //엘소드
+		{ GameCode: 106606, RecommendDetail: '#요즘 제일 인기있는', FeatureID: 0 }, //카운터사이드
+		{ GameCode: 131072, RecommendDetail: '#요즘 제일 인기있는', FeatureID: 0 }, //바람의나라
+		{ GameCode: 720896, RecommendDetail: '#요즘 제일 인기있는', FeatureID: 0 }, //크레이지아케이드
+	]
+};
+mainData = null;
+gameData = []; // 게임 리스트
+genreData = []; // 장르 리스트
+recommendData = defaultRecommendData; // 추천 초기화
+
+function isMyGame(featureID) {
+	return (featureID == -1 || featureID == 2018);
+}
+
+function myGameSetting() {
+	if ($("#myGameSetting")[0].checked) {
+		$(".myGame").addClass("stateDirectly");
+		$('.btSec .btCancel').attr('opt', '{"Name":"MyGame_Customizing","Type":"CustomizingCancel"}');
+		$('.btSec .btSubmit').attr('opt', '{"Name":"MyGame_Customizing","Type":"CustomizingConfirm"}');
+	} else {
+		$(".myGame").removeClass("stateDirectly");
+		$('.btSec .btCancel').attr('opt', '{"Name":"MyGame_Customizing","Type":"AutoCancel"}');
+		$('.btSec .btSubmit').attr('opt', '{"Name":"MyGame_Customizing","Type":"AutoConfirm"}');
+	}
+}
+
+function setMyGameReset() {
+	$('.allGameList input[type=checkbox]').prop('checked', false);
+	$('#myGameCodeList').val('');
+	drawMyGameIconList();
+}
+
+function chkMyGame(myGame) {
+	$.each(myGame, function (ii, gameCode) {
+		$.each($('.allGameList input[type=checkbox]'), function (i, game) {
+			if ($(game).val() == gameCode) {
+				$(game).prop('checked', true);
+			}
+		});
+	});
+	drawMyGameIconList();
+}
+
+function drawMyGameIconList() {
+	var myList = [];
+	myList = $('#myGameCodeList').val().split(',');
+	$('.directlySetting .myGameList li').remove();
+	if ($('#myGameCodeList').val().length > 0) {
+		$.each(myList, function (i, gameCode) {
+			var myGameList_UL = $('.directlySetting .myGameList ul');
+			var myGameList_LI = $('<li><span class="gameImg"><img src="' + getIconByGameCode(gameCode) + '" width="60" height="60" alt=""></span></li>');
+			myGameList_UL.append(myGameList_LI);
+		});
+	}
+
+	while ($('.directlySetting .myGameList li').length < 3) {
+		var myGameList_UL = $('.directlySetting .myGameList ul');
+		var myGameList_LI = $('<li><span class="none"></span></li>');
+		myGameList_UL.append(myGameList_LI);
+	}
+}
+
+function setMyGame() {
+	if ($("#myGameSetting")[0].checked && $('.allGameList input[type=checkbox]:checked').length == 0) {
+		$('.myGameAlert').html('<p>게임을 1개 이상 선택해주세요.</p>').fadeIn(300).delay(1000).fadeOut(300);
+	} else {
+		var myGameType = 1;
+		var mySetGames = [];
+		if ($("#myGameSetting")[0].checked) {
+			myGameType = 2;
+			$.each($('#myGameCodeList').val().split(','), function (i, game) {
+				mySetGames.push(game);
+			});
+		} else {
+			$('#myGameCodeList').val('');
+		}
+
+		$.ajax({
+			url: Home.domain.myapi + "/MyGame/MyGameInfo?st=sso",
+			dataType: 'json',
+			type: 'POST',
+			data: 'MyGameType=' + myGameType + '&ChangeReason=2&strMyGames=' + JSON.stringify(mySetGames),
+			contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+			processData: false,
+			xhrFields: {
+				withCredentials: true
+			}
+		}).done(function (result) {
+			$OASIS.SessionStorage.remove('recommendGame_' + result.moreinfo); // My게임 초기화
+			$OASIS.SessionStorage.remove('GNB_MyGame_' + result.moreinfo); // GNB My게임 초기화
+			$OASIS.SessionStorage.remove('myNotice_' + result.moreinfo); // MyNotice 초기화
+			recommendData = defaultRecommendData; // 추천 게임 초기화
+			$('.recommendGame').removeClass('mswMyGameMax');
+
+			callMyGame(mainData, result.moreinfo); // 추천 영역 재호출
+
+			$('.myGameAlert').html('<p>적용 되었습니다.</p>').fadeIn(300).delay(1000).fadeOut(300);
+			setTimeout(function () {
+				$(".myGame").removeClass("myGameShow");
+				$("body").removeClass("scrollHide");
+			}, 1000);
+		}).fail(function (e) {
+			console.log(e);
+		});
+	}
+}
+
+function drawMyGameAutoSetting(recent, game) {
+	var recentUL = $('.autoSetting ul');
+	var recentLI = $('<li></li>');
+
+	var recentGame = $('<span class="gameImg"><img src="' + getGameImage(game.extendGameInfo.gameImageList, 'fileGnbDirect') + '" width="60" height="60" alt=""></span><span class="gameName">' + game.basicGameInfo.gameName.replace('|br|', '') + '</span><span class="date">' + recent.lastConnectionDateTime + '</span>');
+	recentLI.append(recentGame);
+	recentUL.append(recentLI);
+}
+
+function drawMyGameManualSetting(gameData, genreData) {
+	var allGameDiv = $('.allGameList');
+	$('.allGameList h3').remove();
+	$('.allGameList ul').remove();
+	$.each(genreData, function (i, genre) {
+		var genreHeader = $('<h3>' + genre.genreName + '</h3>');
+		allGameDiv.append(genreHeader);
+		var genreChildUL = $('<ul></ul>');
+		$.each(gameData, function (ii, game) {
+			if (game.basicGameInfo.genreSN.includes(genre.genreSN)) {
+				var genreChildLI = $('<li><input type="checkbox" id="myGame_' + game.basicGameInfo.gameCode + '" value="' + game.basicGameInfo.gameCode + '"><label for="myGame_' + game.basicGameInfo.gameCode + '"><span class="gameImg"><img src="' + getGameImage(game.extendGameInfo.gameImageList, 'fileGnbDirect') + '" width="28" height="28" alt=""></span>' + game.basicGameInfo.gameName.replace('|br|', '') + '</label></li>');
+				genreChildUL.append(genreChildLI);
+			}
+		});
+		allGameDiv.append(genreChildUL);
+	});
+
+	//체크박스 validate 및 아이콘 추가.
+	$('.allGameList input[type=checkbox]').on('change', function () {
+		//myGameCodeList
+		if ($('.allGameList input[type=checkbox]:checked').length <= 3) {
+			var myList = [];
+			if ($('#myGameCodeList').val().length > 0) {
+				myList = $('#myGameCodeList').val().split(',');
+			}
+			if ($(this).prop('checked')) {
+				myList.push($(this).val());
+			} else {
+				var idx = myList.indexOf($(this).val());
+				myList.splice(idx, 1);
+			}
+			$('#myGameCodeList').val(myList);
+			drawMyGameIconList();
+		} else {
+			$(this).prop('checked', false);
+			$('.myGameAlert').html('<p>최대 3개까지 선택 가능합니다.</p>').fadeIn(300).delay(1000).fadeOut(300);
+		}
+	});
+}
+
+function initMyGameSettingExec(myGame, gameData, recentGame) {
+	$('.autoSetting ul > li').remove();
+	if (recentGame.length > 0) {
+		$.each(recentGame, function (i, recent) {
+			$.each(gameData, function (ii, game) {
+				if (game.gameCode == recent.gameCode) {
+					drawMyGameAutoSetting(recent, game);
+				}
+			});
+		});
+		$('.autoSetting ul').show();
+		$('.autoSetting .none').remove();
+	} else {
+		// 최근 게임이 없음.
+		$('.autoSetting ul').hide();
+		$('.autoSetting .none').show();
+	}
+	if (myGame.MyGameInfo.MyGameType == 0 || myGame.MyGameInfo.MyGameType == 1) {
+		// My게임 설정을 안했거나, 자동선택 일 떄.
+		$("#myGameSetting")[0].checked = false;
+		$('#myGameCodeList').val('');
+	} else {
+		// 수동 선택 일단 목록부터 그리고.. 
+		$("#myGameSetting")[0].checked = true;
+	}
+	drawMyGameIconList();
+	myGameSetting();
+}
+
+function initMyGameSetting(myGame, gameData) {
+	window.Home.Components['Storage'].addParam({
+		label: 'myRecentGameData',
+		key: 'sn',
+		value: myGame.MyGameInfo.MemberSN
+	});
+	window.Home.Components['Storage'].addSubscriber({
+		label: 'myRecentGameData',
+		callback: function (data) {
+			initMyGameSettingExec(myGame, gameData, data.recentList);
+		}
+	});
+	window.Home.Components['Storage'].fetchData('myRecentGameData');
+}
+
+function drawLiveGameCard(recommend, game) {
+	var h3SubTitle = $('.myInfo .subTitle h3');
+	var ul = $('.recommendGame ul');
+
+	if (recommend.FeatureID > -2) {
+		var RecommendType = '';
+		if (NXMember.IsLogin()) {
+			if (isMyGame(recommend.FeatureID)) RecommendType = 'MyGame';
+			else RecommendType = 'Recommendation_Login';
+		} else {
+			RecommendType = 'Recommendation_Logout';
+		}
+	
+		var li = $('<li class="swiper-slide"></li>');
+
+		var linkTarget = "_self";
+		if (game.extendGameInfo.gameWebUrl.hasOwnProperty('pcSiteOpenType') && game.extendGameInfo.gameWebUrl.pcSiteOpenType === 2) linkTarget = "_blank";
+		var a = $('<a href="' + game.extendGameInfo.gameWebUrl.pcSiteUrl + '" target="' + linkTarget + '" onclick="sendClick2Log(this);" obj="P_MAIN" opt=\'{\"Name\":\"Personalization\",\"Type\":\"' + RecommendType + '\",\"Value\":\"' + recommend.FeatureID + '\",\"GameCode\":\"' + recommend.GameCode + '\"}\'></a>');
+
+		var cate = $('<span class="gameCate"></span>');
+		if (isMyGame(recommend.FeatureID)) cate.append('<span class="my">my</span>');
+		else cate.append('<span class="recommend">추천</span>');
+
+		var gameImg = $('<span class="gameImg"><img src="' + getGameImage(game.extendGameInfo.gameImageList, 'fileRecommendImg') + '" width="153" height="192" alt=""></span>');
+
+		var gameName = $('<span class="gameName">' + game.basicGameInfo.gameName.replace('|br|', '<br/>') + '</span>');
+
+		var gameCheck = $('<span class="gameCheck"></span>');
+
+		// 점검 or 사전다운로드
+		if (game.extendGameInfo.maintenance && game.extendGameInfo.maintenance.isMaintenance) {
+			// 일반 점검
+			if (game.extendGameInfo.maintenance.type === "MAINTENANCE") {
+				var endAt = "";
+
+				// 종료일자 포함 시
+				if (!game.extendGameInfo.maintenance.isIndefinite && game.extendGameInfo.maintenance.endAt) {
+					endAt = new Date(game.extendGameInfo.maintenance.endAt)
+					endAt = endAt.getMonth() + 1 + "/" + endAt.getDate() + " " + String(endAt.getHours()).padStart(2, '0') + ":" + String(endAt.getMinutes()).padStart(2, '0') + " 완료예정"
+				}
+				gameCheck.append('<span><strong>점검중</strong><span class="iconMaintenance"></span></span> ' + endAt);
+			}
+			// 사전 다운로드
+			else if (game.extendGameInfo.maintenance.type === "PRE_DOWNLOAD") {
+				var endAt = "";
+
+				if (!game.extendGameInfo.maintenance.isIndefinite && game.extendGameInfo.maintenance.endAt) {
+					endAt = new Date(game.extendGameInfo.maintenance.endAt)
+					endAt = endAt.getMonth() + 1 + "/" + endAt.getDate() + " " + String(endAt.getHours()).padStart(2, '0') + ":" + String(endAt.getMinutes()).padStart(2, '0') + " 까지"
+				}
+				gameCheck.append('<span><strong>사전다운로드</strong><span class="iconPreDownload"></span></span> ' + endAt);
+			}
+		}
+
+		if (recommend.RecommendDetail.includes('{장르명}')) {
+			recommend.RecommendDetail = recommend.RecommendDetail.replace('{장르명}', getGenreName(game.basicGameInfo.genreSN[0]));
+		}
+		if (recommend.FeatureID != -1 && h3SubTitle.text() != recommend.RecommendDetail) {
+			h3SubTitle.text(recommend.RecommendDetail);
+        }
+
+		a.append(gameImg).append(cate).append(gameName).append(gameCheck);
+		li.append(a);
+		ul.append(li);
+
+		$h.a2s.sendContentsLog("P_MAIN", '{"Name":"Personalization","Type":"' + RecommendType + '","Value":"' + recommend.FeatureID + '","GameCode":"' + recommend.GameCode + '"}');
+	}
+}
+
+function drawMyGameSettingCard() {
+	var ul = $('.recommendGame ul');
+	var li = $('<li class="swiper-slide none"></li>');
+	var a = $('<a href="#" class="btMyGameSetting" onclick="sendClick2Log(this);" obj="P_MAIN" opt=\'{\"Name\":\"Personalization\",\"Type\":\"MyGame_Settings\"}\'> <span class="tit">MY게임 설정하기</span> <span class="cnts">설정 한번으로 원하는 <br>게임을 빠르게 이동할 수 <br>있습니다.</span></a>');
+	li.append(a);
+	ul.prepend(li);
+}
+
+function drawMswCard(data) {
+	var isSuccess = false;
+	var a2sType = NXMember.IsLogin() ? 'Msw_Login' : 'Msw_Logout';
+	var url = data.url || Home.domain.mverseurl + '/play/' + data.gameId;
+	var ul = $('.recommendGame ul');
+	var li = $('<li class="swiper-slide msw"></li>');
+	var a = $('<a href="' + url + '" onclick="sendClick2Log(this);" obj="P_MAIN" opt=\'{\"Name\":\"Personalization\",\"Type\":\"' + a2sType + '\",\"Value\":\"' + data.gameId + '\"}\'></a>');
+
+	var gameImg = $('<span class="gameImg"><img src="' + data.imageUrl +'" width="153" height="192" alt=""></img></span>');
+	var cate = $('<span class="gameCate"></span>');
+	var gameName = $('<span class="gameName">' + data.gameName + '</span>');
+	var gameReason = $('<span class="gameReason"><span class="icon"></span>' + '메이플스토리 월드' + '</span>');
+
+	cate.append('<span class="pick">Pick</span>');
+
+	a.append(gameImg).append(cate).append(gameName).append(gameReason);
+	li.append(a);
+	ul.append(li);
+}
+
+//FeatureID = -2(최근게임없음,MY게임없음), -1(MY게임), 0(기본추천데이터), LiveAPI데이터
+function recommendGameExecute(data, gameData) {
+	var myGameSettingTooltip = true;
+	var myManualGameCode = [];
+	var myNoticeGameCode = [];
+	var recommendGameViewCount = 0; // MSW 추천게임 제외하고 최대 10개
+
+	$('.recommendGame ul').empty(); //추천게임 영역 초기화
+
+	if (NXMember.IsLogin()) {
+		var isExistMyGame = false;
+		$.each(data.MyGames, function (i, myGame) {
+			if (isMyGame(myGame.FeatureID)) isExistMyGame = true;
+		});
+
+		if (!isExistMyGame) {
+			drawMyGameSettingCard();
+			recommendGameViewCount++;
+		}
+	}
+
+	var isMswRecommend = false;
+	var myGameCount = 0;
+
+	// MSW 추천게임 API 호출
+	$.ajax({
+		url: Home.domain.mverseapi + "/game/v1/mverse/banners?language=ko&playPlatforms=1&type=NEXON_HOME",
+		headers: { 'x-mverse-language': 'ko' },
+		dataType: 'json',
+		async: false,
+		timeout: 5000,
+		type: 'GET',
+		xhrFields: { withCredentials: true },
+	}).done(function (response) {
+		if (response && response.data) {
+			var data = response.data;
+			if (response.code == 0 && Array.isArray(data) && data.length > 0 && data[0].imageUrl) {
+				drawMswCard(data[0]);
+				isMswRecommend = true;
+			}
+        }
+	}).fail(function () { })
+	
+	$.each(data.MyGames, function (i, recommend) {
+		if (recommendGameViewCount >= 10) return;
+
+		if (isMyGame(recommend.FeatureID)) {
+			myNoticeGameCode.push(recommend.GameCode);
+			myGameCount++;
+		}
+		if (recommend.FeatureID == -1) {
+			myManualGameCode.push(recommend.GameCode);
+		}
+
+		if (recommend.FeatureID == -2) {
+			myGameSettingTooltip = false;
+			drawLiveGameCard(recommend, null);
+			recommendGameViewCount++;
+		} else {
+			$.each(gameData, function (ii, game) {
+				if (game.gameCode == recommend.GameCode) {
+					drawLiveGameCard(recommend, game);
+					recommendGameViewCount++;
+				}
+			});
+		}
+	});
+
+	// MSW 추천게임이 있고, My게임이 3개인 경우, mswMyGameMax 클래스 추가
+	if (isMswRecommend && myGameCount === 3) {
+		$('.recommendGame').addClass('mswMyGameMax');
+	}
+	
+	initMyGameSetting(data, gameData);
+	drawMyGameManualSetting(gameData, genreData);
+	if (data.MyGameInfo.MyGameType == 2) {
+		$('#myGameCodeList').val(myManualGameCode);
+		chkMyGame(myManualGameCode);
+	}
+	// tooltipOpen
+	if (NXMember.IsLogin() && myGameSettingTooltip && data.MyGameInfo.MyGameType == 0) {
+		if ($OASIS.Cookie.get('MG_TP') == '') {
+			$('#myGameTooltip').addClass('tooltipOpen');
+			$('#myGameTooltip .btClose').on('click', function () {
+				$OASIS.Cookie.set('MG_TP', '1', 365);
+			});
+		}
+	}
+
+	if (NXMember.IsLogin()) {
+		window.Home.Components['Storage'].addParam({
+			label: 'myNoticeData',
+			key: 'sn',
+			value: data.MyGameInfo.MemberSN
+		});
+		window.Home.Components['Storage'].addParam({
+			label: 'myNoticeData',
+			key: 'mynoticegamecode',
+			value: myNoticeGameCode
+		});
+
+		window.Home.Components['Storage'].addSubscriber({
+			label: 'myNoticeData',
+			callback: function (myNoticeData) {
+				if (myNoticeData == null) {
+					$('.newsCnts .swiper-wrapper').hide();
+					$('#news .swiper-button-prev').hide();
+					$('#news .swiper-button-next').hide();
+					var noneLayer = $('<div class="none"><p>MY게임 소식이 없습니다.</p></div>');
+					$('#news').append(noneLayer);
+
+					$(".logged .tab li").on("click", function (e) {
+						e.preventDefault();
+						var $el = $(".logged");
+						if ($(this).hasClass("tabInfo")) {
+							$el.removeClass("stateNews").addClass("stateInfo");
+						} else {
+							$el.removeClass("stateInfo").addClass("stateNews");
+						}
+					});
+					$(".logged").removeClass("stateNews").addClass("stateInfo");
+				} else {
+					myNoticeExecute(myNoticeData, data.MyGames);
+					$(".btMyGameSetting").removeClass('disabled');
+					$(".btMyGameSetting").on("click", function (e) {
+						e.preventDefault();
+						myGameSetBtn();
+					});
+                }
+			}
+		});
+		window.Home.Components['Storage'].fetchData('myNoticeData');
+	}
+
+	new Swiper('.recommendGameCnts', {
+		slidesPerView: 4,
+		mousewheel: false,
+		allowTouchMove: false,
+		navigation: {
+			nextEl: '.recommendGame .swiper-button-next',
+			prevEl: '.recommendGame .swiper-button-prev',
+		},
+		breakpoints: {
+			1412: {
+				slidesPerView: 3,
+			}
+		}
+	});
+}
+
+function drawPromotionBanner(data) {
+	if (data.homeList.length > 0) {
+		homebanner = [];
+		if (NXMember.IsLogin()) { // 로그인 되어 있으면, 추천 게임 순위에 따라 해당 배너 우선 노출
+			tempbanner = [];
+			$.each(recommendData.MyGames.slice(0, 4), function (i, recommend) {
+				$.each(data.homeList, function (j, banner) {
+					if (recommend.GameCode == banner.gameCode) {
+						if (homebanner.filter(function (item) { return item.bannerSN == banner.bannerSN; }).length == 0) {
+							if (isMyGame(recommend.FeatureID)) {
+								banner.recommendType = 1;
+							} else {
+								banner.recommendType = 2;
+							}
+							homebanner.push(banner);
+						}
+					}
+				});
+			});
+			$.each(data.homeList, function (j, banner) {
+				if (homebanner.filter(function (item) { return item.bannerSN == banner.bannerSN; }).length == 0) {
+					homebanner.push(banner);
+				}
+			});
+		} else {
+			homebanner = data.homeList;
+		}
+		promotionBannerList.item = homebanner;
+	}
+	promotionBannerLayout.callChangeLayout();
+}
+
+function myGameSetBtn() {
+	$(".myGame").addClass("myGameShow");
+	$("body").addClass("scrollHide");
+	myGameSetting();
+	return false;
+}
+
+function homeBannerExecute() {
+	//promotionBanner > 
+	window.Home.Components['Storage'].addSubscriber({
+		label: 'homeBannerData',
+		callback: function (data) {
+			if (data === null) promotionBannerLayout.callChangeLayout();
+			else drawPromotionBanner(data);
+		}
+	});
+	window.Home.Components['Storage'].fetchData('homeBannerData');
+}
+
+function getGenreName(genreSN) {
+	var genreName = '';
+	$.each(genreData, function (i, genre) {
+		if (genre.genreSN == genreSN) {
+			genreName = genre.genreName;
+		}
+	});
+	return genreName;
+}
+
+function recommendDataExecute(sn) {
+	window.Home.Components['Storage'].addParam({
+		label: 'recommendGameData',
+		key: 'sn',
+		value: sn
+	});
+	window.Home.Components['Storage'].addSubscriber({
+		label: 'recommendGameData',
+		callback: function (data) {
+			if (data && data.MyGames) {
+				if (data.MyGames.length < 4) { // API에서 4개 미만 게임을 전달해 주면 기본 추천 게임을 노출
+					recommendData.MyGameInfo = data.MyGameInfo; //My게임 세팅 상태 복사
+
+					var tempMyGames = [];
+					$.each(data.MyGames, function (i, myGame) {
+						if (isMyGame(myGame.FeatureID)) tempMyGames.unshift(myGame);
+					});
+					
+					$.each(tempMyGames, function (i, tmyGame) {
+						$.each(recommendData.MyGames, function (i, rGame) {
+							if (rGame && rGame.GameCode == tmyGame.GameCode) { //추천게임, MY게임 중복
+								recommendData.MyGames.splice(i, 1);
+							}
+						});
+						recommendData.MyGames.unshift(tmyGame);
+					});
+				}
+				else {
+					recommendData = data;
+                }
+			}
+			
+			if (!data && NXMember.IsLogin()) {
+				recommendData.MyGameInfo.MemberSN = window.HomeHelper.getMemberSN();
+			}
+
+			recommendGameExecute(recommendData, gameData, genreData);
+			homeBannerExecute();
+
+			if (NXMember.IsLogin()) {
+				try {
+					window.Gnb.Components['Storage'].fetchData('myGame');
+				} catch (e) { }
+			}
+		}
+	});
+	window.Home.Components['Storage'].fetchData('recommendGameData');
+}
+
+function myNoticeExecute(data, myGames) {
+	try {
+		newsSwiper.destroy();
+	} catch (e) {
+
+	}
+	$('.newsCnts .swiper-wrapper div').remove();
+	$('.news .none').remove();
+	if (data.myNoticeList.length > 0) {
+		$.each(data.myNoticeList, function (i, notice) {
+			var slide = $('<div class=\"swiper-slide\" data-gamecode=\"' + notice.gameCode + '\"></div>');
+			var a = $('<a href=\"' + notice.linkUrl + '\"></a>');
+			var cate = $('<span class=\"cate\">' + notice.noticeCate.replace('[', '').replace(']', '') + '</span>');
+			var date = $('<span class="date">' + notice.dateText + '</span>');
+			var cnts = $('<span class=\"cnts\"></span>');
+			var gameImg = $('<span class=\"gameImg\"><img src=\"' + notice.gameImgUrl + '\" width=\"26\" height=\"26\" alt=\"' + notice.gameName.replace('|br|', '') + '\"></span>');
+			var gameName = $('<span class=\"gameName\"><span>' + (notice.noticeType == 1 ? notice.gameName.replace('|br|', '<br/>') : notice.gameName.replace('|br|', '')) + '</span></span>');
+
+			if (notice.noticeType == 1) {
+				// 공지사항
+				slide.addClass('slideTxt');
+				cnts.text(notice.noticeContent.eventTitle);
+
+				a.attr('obj', 'P_MAIN').attr('opt', '{"Name":"Personalization","Type":"News_Notice","GameCode":"' + notice.gameCode + '","Value":"' + notice.noticeCate.replace('[', '').replace(']', '') + '"}');
+				a.append(cate).append(date).append(cnts).append(gameImg).append(gameName);
+				a.bind('click', function () { $h.a2s.sendClickLog('P_MAIN', '{"Name":"Personalization","Type":"News_Notice","GameCode":"' + notice.gameCode + '","Value":"' + notice.noticeCate.replace('[', '').replace(']', '') + '"}') });
+			} else if (notice.noticeType == 2) {
+				// 이벤트
+				slide.addClass('slideImg');
+				cnts.append('<span class=\"eventTit\">' + notice.noticeContent.eventTitle + '</span>');
+				cnts.append('<span class=\"eventCnts\">' + notice.noticeContent.eventContents + '</span>');
+
+				var eventImg = $('<span class=\"eventImg\"><img src=\"' + notice.eventImgUrl + '\" width=\"315\" alt=\"\"></span>');
+
+				a.attr('obj', 'P_MAIN').attr('opt', '{"Name":"Personalization","Type":"News_Event","GameCode":"' + notice.gameCode + '"}');
+				a.append(cate).append(date).append(cnts).append(eventImg).append(gameImg).append(gameName);
+				a.bind('click', function () { $h.a2s.sendClickLog('P_MAIN', '{"Name":"Personalization","Type":"News_Event","GameCode":"' + notice.gameCode + '"}') });
+			}
+			slide.append(a);
+			$('.newsCnts .swiper-wrapper').append(slide);
+			$('.newsCnts .swiper-wrapper').show();
+			$('#news .swiper-button-prev').show();
+			$('#news .swiper-button-next').show();
+			$('#news').removeClass('newsNone');
+		});
+		newsSwiper = new Swiper('.newsCnts', {
+			slidesPerView: 'auto',
+			slidesOffsetBefore: 44,
+			slidesOffsetAfter: 44,
+			mousewheel: true,
+			allowTouchMove: false,
+			navigation: {
+				nextEl: '.news .swiper-button-next',
+				prevEl: '.news .swiper-button-prev',
+			},
+			breakpoints: {
+				1412: {
+					slidesOffsetBefore: 34,
+					slidesOffsetAfter: 34
+				}
+			}
+		});
+		newsSwiper.update();
+		$('.news .swiper-button-next').on('click', function () {
+			$h.a2s.sendClickLog('P_MAIN', '{"Name":"Personalization","Type":"News_Next"}');
+		});
+		$('.news .swiper-button-prev').on('click', function () {
+			$h.a2s.sendClickLog('P_MAIN', '{"Name":"Personalization","Type":"News_Prev"}');
+		});
+		$(".logged .tab li").on("click", function (e) {
+			e.preventDefault();
+			var $el = $(".logged");
+			if ($(this).hasClass("tabInfo")) {
+				$el.removeClass("stateNews")
+					.addClass("stateInfo");
+			} else {
+				$el.removeClass("stateInfo")
+					.addClass("stateNews");
+			}
+			newsSwiper.update();
+		});
+	} else {
+		var noneLayer = $('<div class="none setting"><p>MY게임 설정하고<br>내 게임의 최신 소식을 빠르게 확인해보세요.</p><div><button type="button" class="btMyGameSetting" onclick="myGameSetBtn();sendClick2Log(this);" obj="P_MAIN" opt=\'{\"Name\":\"Personalization\",\"Type\":\"News_GameSettings\"}\'>MY게임 설정</button><button type="button"  onclick="sendClick2Log(this);document.location.href=\'' + document.location.protocol + '//' + document.location.host + document.location.pathname + '#allGame\'" obj="P_MAIN" opt=\'{\"Name\":\"Personalization\",\"Type\":\"News_GameFind\"}\'>게임 찾기</button></div></div>');
+		$.each(myGames, function (i, myGame) {
+			if (myGame.FeatureID == -1 || myGame.FeatureID == 2018) {
+				noneLayer = $('<div class="none"><p>MY게임 소식이 없습니다.</p></div>');
+			}
+		});
+
+		$('#news').addClass('newsNone');
+		$('.newsCnts .swiper-wrapper').hide();
+		$('#news .swiper-button-prev').hide();
+		$('#news .swiper-button-next').hide();
+		$('#news').append(noneLayer);
+
+		$(".logged .tab li").on("click", function (e) {
+			e.preventDefault();
+			var $el = $(".logged");
+			if ($(this).hasClass("tabInfo")) {
+				$el.removeClass("stateNews")
+					.addClass("stateInfo");
+			} else {
+				$el.removeClass("stateInfo")
+					.addClass("stateNews");
+			}
+		});
+		$(".logged").removeClass("stateNews").addClass("stateInfo");
+	}
+	$('.myInfo .logged').show();
+	$('.myInfo .login').hide();
+}
+
+//*main call
+function callMyGame(mainData, sn) {
+	this.mainData = mainData;
+	if (mainData.gameList.length > 0) {
+		this.gameData = mainData.gameList; // 게임 리스트
+		this.genreData = mainData.genreList; // 장르 리스트
+
+		recommendDataExecute(sn);
+    }
+}
+
+//DOM event
+$(function () {
+	$(".myGame .btSec .btClose, .myGame .btSec .btCancel").on("click", function () {
+		$(".myGame").removeClass("myGameShow");
+		$("body").removeClass("scrollHide");
+
+		var myManualGameCode = [];
+		$.each(recommendData.MyGames, function (i, recommend) {
+			if (recommend.FeatureID == -1) {
+				myManualGameCode.push(recommend.GameCode);
+			}
+		});
+
+		initMyGameSetting(recommendData, mainData.gameList);
+		drawMyGameManualSetting(mainData.gameList, mainData.genreList);
+
+		if (recommendData.MyGameInfo.MyGameType == 2) {
+			$('#myGameCodeList').val(myManualGameCode);
+			chkMyGame(myManualGameCode);
+		}
+
+		drawMyGameIconList();
+		return false;
+	});
+
+	$("#myGameSetting").on("change", function (e) {
+		myGameSetting();
+		if ($("#myGameSetting")[0].checked) {
+			$("#myGameSetting").attr('opt', '{"Name":"MyGame_Customizing","Type":"CustomizingTab"}');
+			$h.a2s.sendClickLog('P_MAIN', '{"Name":"MyGame_Customizing","Type":"CustomizingTab"}');
+		} else {
+			$("#myGameSetting").attr('opt', '{"Name":"MyGame_Customizing","Type":"AutoTab"}');
+			$h.a2s.sendClickLog('P_MAIN', '{"Name":"MyGame_Customizing","Type":"AutoTab"}');
+		}
+	});
+});;
+//home banner area -> class="promotionBanner"
+var promotionBannerList = {
+    "item": [
+        {
+            "bannerSN": 0,
+            "type": "default",
+            "gamename": "넥슨플레이",
+            "eventname": "넥슨플레이 소개",
+            "link": "http://nexonplay.nexon.com/index.aspx",
+            "bg": "https://rs.nxfs.nexon.com/home/images/main/homebanner_image_nxplay.png",
+            "bgcolor": "#6d40f7"
+        },
+        {
+            "bannerSN": 0,
+            "type": "default",
+            "gamename": "넥슨 OTP",
+            "eventname": "넥슨 OTP 소개",
+            "link": "https://security-center.nexon.com/nexonotp",
+            "bg": "https://rs.nxfs.nexon.com/home/images/main/homebanner_image_otp.png",
+            "bgcolor": "#132b97"
+        }
+    ]
+};
+var bannerA2S = [];
+var video_ids = [];
+var player = new Array();
+var mouseIN = false;
+var video_playing = false;
+var st = null;
+var promotionBannerLayout = (function () {
+    var promotionbannerItem = promotionBannerList.item;
+    var promotionbannerItemlength = promotionbannerItem.length;
+    var promotionbannerPage = 0;
+    var promotionbannerSize = 5;
+
+    var bannerCnts = function (i) {
+        var el = "";
+        switch (promotionbannerItem[i].type) {
+            case "default":
+                el += "<div class='swiper-slide slideDefault' data-bannerID='" + promotionbannerItem[i].bannerSN + "' data-bannerType='Image'><a href='" + promotionbannerItem[i].link + "' target='_blank' onclick='sendClick2Log(this);' obj='P_MAIN' opt='{\"Name\":\"HomeBanner\",\"Type\":\"Image\",\"Value\":\"" + promotionbannerItem[i].bannerSN + "\"}'>";
+                el += "<div class='itemBg swiper-lazy' style='background-color:" + promotionbannerItem[i].bgcolor + "' data-background='" + promotionbannerItem[i].bg + "'></div>"
+                el += "<span class='acchidden'>" + promotionbannerItem[i].gamename.replace('|br|', '') + " " + promotionbannerItem[i].eventname + "</span>"
+                el += "</a></div>";
+                break;
+            case "parallax":
+                el += "<div class='swiper-slide slideParallax' data-bannerID='" + promotionbannerItem[i].bannerSN + "' data-bannerType='Parallax'><a href='" + promotionbannerItem[i].link + "' target='_blank' onclick='sendClick2Log(this);' obj='P_MAIN' opt='{\"Name\":\"HomeBanner\",\"Type\":\"Parallax\",\"Value\":\"" + promotionbannerItem[i].bannerSN + "\"}'>";
+                el += "<div class='itemBg swiper-lazy' style='background-color:" + promotionbannerItem[i].bgcolor + "' data-background='" + promotionbannerItem[i].bg + "'></div>"
+                el += "<span class='acchidden'>" + promotionbannerItem[i].gamename.replace('|br|', '') + " " + promotionbannerItem[i].eventname + "</span>"
+                el += "<div class='itemCharacter'><div class='itemDeco swiper-lazy' data-background='" + promotionbannerItem[i].character + "'></div></div>"
+                el += "<div class='itemText'><div class='itemDeco swiper-lazy' data-background='" + promotionbannerItem[i].text + "'></div></div>"
+                el += "</a></div>";
+                break;
+            case "video":
+                var yt_id = promotionbannerItem[i].video.replace('https://www.youtube.com/embed/', '').replace('https://youtu.be/', '');
+                el += "<div class='swiper-slide slideVideo' data-bannerID='" + promotionbannerItem[i].bannerSN + "' data-bannerType='Video'><a href='" + promotionbannerItem[i].link + "' target='_blank' onclick='sendClick2Log(this);' obj='P_MAIN' opt='{\"Name\":\"HomeBanner\",\"Type\":\"Video\",\"Value\":\"" + promotionbannerItem[i].bannerSN + "\"}'>";
+                el += "<div class='itemBg swiper-lazy' style='background-color:" + promotionbannerItem[i].bgcolor + "' data-background='" + promotionbannerItem[i].bg + "'></div>"
+                el += "<span class='acchidden'>" + promotionbannerItem[i].gamename.replace('|br|', '') + " " + promotionbannerItem[i].eventname + "</span>"
+                el += "<div class='itemText'><div class='itemDeco swiper-lazy' data-background='" + promotionbannerItem[i].text + "'></div></div></a>"
+                el += "<div class='itemVideo'><div class='itemDeco' id='ytPlayer_" + yt_id + "'><iframe src='https://www.youtube.com/embed/" + yt_id + "' frameborder='0' allow='accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe></div></div></div>"
+
+                video_ids.push(yt_id);
+                break;
+            default:
+                break;
+        }
+        return el;
+    }
+    var bannerRandomCnts = function (i) {
+        var el = "";
+        switch (promotionbannerItem[i].type) {
+            case "default":
+                el += "<div class='swiper-slide slideDefault'><a href='" + promotionbannerItem[i].link + "' target='_blank'>"
+                el += "<div class='itemBg swiper-lazy' style='background-color:" + promotionbannerItem[i].bgcolor + "' data-background='" + promotionbannerItem[i].bg + "'></div>"
+                el += "<span class='acchidden'>" + promotionbannerItem[i].gamename + " " + promotionbannerItem[i].eventname + "</span>"
+                el += "</a></div>";
+                break;
+            case "parallax":
+                el += "<div class='swiper-slide slideParallax'><a href='" + promotionbannerItem[i].link + "' target='_blank'>"
+                el += "<div class='itemBg swiper-lazy' style='background-color:" + promotionbannerItem[i].bgcolor + "' data-background='" + promotionbannerItem[i].bg + "'></div>"
+                el += "<span class='acchidden'>" + promotionbannerItem[i].gamename + " " + promotionbannerItem[i].eventname + "</span>"
+                el += "<div class='itemCharacter'><div class='itemDeco swiper-lazy' style='background-image:url(" + promotionbannerItem[i].character + ")'></div></div>"
+                el += "<div class='itemText'><div class='itemDeco swiper-lazy' style='background-image:url(" + promotionbannerItem[i].text + ")'></div></div>"
+                el += "</a></div>";
+                break;
+            case "video":
+                var vid = promotionbannerItem[i].video.replace('https://www.youtube.com/embed/', '').replace('https://youtu.be/', '');
+                el += "<div class='swiper-slide slideVideo'><a href='" + promotionbannerItem[i].link + "' target='_blank'>"
+                el += "<div class='itemBg swiper-lazy' style='background-color:" + promotionbannerItem[i].bgcolor + "' data-background='" + promotionbannerItem[i].bg + "'></div>"
+                el += "<span class='acchidden'>" + promotionbannerItem[i].gamename + " " + promotionbannerItem[i].eventname + "</span>"
+                el += "<div class='itemText'><div class='itemDeco swiper-lazy' style='background-image:url(" + promotionbannerItem[i].text + ")'></div></div></a>"
+                el += "<div class='itemVideo'><div class='itemDeco'><iframe src='https://www.youtube.com/embed/" + vid + "' frameborder='0' allow='accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe></div></div></div>"
+                break;
+            default:
+                break;
+        }
+        return el;
+    };
+
+    var promotionSwiper = function () {
+        promotionbannerItem = promotionBannerList.item;
+        promotionbannerItemlength = promotionbannerItem.length;
+        var bannerCntsEl = "";
+        for (var i in promotionbannerItem) {
+            bannerCntsEl += bannerCnts(i);
+        }
+        document.getElementById("promotionBannerCnts").innerHTML = bannerCntsEl;
+
+        if (promotionbannerItemlength > 0) {
+            bannerA2S.push($($('#promotionBannerCnts')[0].children[0]).data('bannerid'));
+            $h.a2s.sendContentsLog('P_MAIN', '{"Name":"HomeBanner","Type":"' + $($('#promotionBannerCnts')[0].children[0]).data('bannertype') + '","Value":"' + $($('#promotionBannerCnts')[0].children[0]).data('bannerid') + '"}');
+        }
+
+        var promotionBannerPaginationPrev = function () {
+            promotionbannerPage = promotionbannerPage - promotionbannerSize;
+            if (promotionbannerPage < 0) {
+                promotionbannerPage = 0;
+            }
+            promotionBannerPaginationTransform();
+        };
+        var promotionBannerPaginationNext = function () {
+            var pageEnd;
+            promotionbannerPage = promotionbannerPage + promotionbannerSize;
+            pageEnd = promotionbannerItemlength - promotionbannerSize;
+            if (promotionbannerPage > pageEnd) {
+                promotionbannerPage = promotionbannerItemlength - promotionbannerSize;
+            }
+            promotionBannerPaginationTransform();
+        };
+        var promotionBannerPaginationAuto = function () {
+            var pageStart = promotionbannerPage;
+            var pageEnd = promotionbannerPage + promotionbannerSize;
+            if (pageStart > promotionBannerCnts.activeIndex || pageEnd <= promotionBannerCnts.activeIndex) {
+                promotionbannerPage = (parseInt(promotionBannerCnts.activeIndex / promotionbannerSize) - 1) * promotionbannerSize
+                promotionBannerPaginationNext();
+            }
+        };
+        var promotionBannerPaginationCheck = function () {
+            if (promotionbannerPage == 0) {
+                $(".promotionNavigation .swiper-button-prev").addClass("swiper-button-disabled");
+            } else {
+                $(".promotionNavigation .swiper-button-prev").removeClass("swiper-button-disabled");
+            }
+            if (promotionbannerPage == promotionbannerItemlength - promotionbannerSize || promotionbannerItemlength <= promotionbannerSize) {
+                $(".promotionNavigation .swiper-button-next").addClass("swiper-button-disabled");
+            } else {
+                $(".promotionNavigation .swiper-button-next").removeClass("swiper-button-disabled");
+            }
+        };
+        var promotionBannerPaginationTransform = function () {
+            if (promotionbannerItemlength >= promotionbannerSize) {
+                var positionX = promotionBannerCnts.pagination.bullets[promotionbannerPage].offsetLeft;
+                $(".promotionBannerPaginationWrapper").css("transform", "translate3d(-" + positionX + "px, 0, 0)");
+                promotionBannerPaginationCheck();
+            }
+        };
+
+        promotionBannerCnts = new Swiper('.promotionBannerCnts', {
+            effect: "fade",
+            allowTouchMove: false,
+            autoHeight: true,
+            preventClicks: false,
+            preloadImages: false,
+            lazy: true,
+            fadeEffect: {
+                crossFade: true
+            },
+            autoplay: {
+                delay: 5000,
+            },
+            pagination: {
+                el: '.promotionBannerPaginationWrapper',
+                clickable: true,
+                renderBullet: function (index, className) {
+                    if (promotionbannerItem.length > 0) {
+                        if (promotionbannerItem[index].recommendType != undefined && promotionbannerItem[index].recommendType == 1) {
+                            return "<div class='" + className + "'><span class='gameCate my'>MY</span><div class='gamename'>" + promotionbannerItem[index].gamename.replace('|br|', '') + "</div><div class='eventname'>" + promotionbannerItem[index].eventname + "</div><div class='progressbar'></div></div>";
+                        } else if (promotionbannerItem[index].recommendType != undefined && promotionbannerItem[index].recommendType == 2) {
+                            return "<div class='" + className + "'><span class='gameCate recommend'>추천</span><div class='gamename'>" + promotionbannerItem[index].gamename.replace('|br|', '') + "</div><div class='eventname'>" + promotionbannerItem[index].eventname + "</div><div class='progressbar'></div></div>";
+                        } else {
+                            return "<div class='" + className + "'><div class='gamename'>" + promotionbannerItem[index].gamename.replace('|br|', '') + "</div><div class='eventname'>" + promotionbannerItem[index].eventname + "</div><div class='progressbar'></div></div>";
+                        }
+                    }
+                }
+            },
+            on: {
+                init: function () {
+                    promotionBannerPaginationCheck();
+                },
+                resize: function () {
+                    promotionBannerPaginationTransform();
+                },
+                slideChange: function () {
+                    var banner = $($('#promotionBannerCnts')[0].children[promotionBannerCnts.activeIndex]);
+                    if (promotionBannerCnts.autoplay.running) {
+                        // 자동
+                        promotionBannerPaginationAuto();
+                        if (!bannerA2S.includes(banner.data('bannerid'))) {
+                            bannerA2S.push(banner.data('bannerid'));
+                            $h.a2s.sendContentsLog('P_MAIN', '{"Name":"HomeBanner","Type":"' + banner.data('bannertype') + '","Value":"' + banner.data('bannerid') + '"}');
+                        }
+                    } else {
+                        $h.a2s.sendContentsLog('P_MAIN', '{"Name":"HomeBanner","Type":"' + banner.data('bannertype') + '","Value":"' + banner.data('bannerid') + '"}');
+                    }
+                },
+                autoplayStart: function () {
+                    $(".promotionBannerPagination").addClass("promotionBannerPaginationActive")
+                },
+                autoplayStop: function () {
+                    $(".promotionBannerPagination").removeClass("promotionBannerPaginationActive")
+                }
+
+            }
+        });
+        promotionBannerCnts.autoplay.stop();
+        var aniTimer = setTimeout(function () { promotionBannerCnts.autoplay.start(); }, 100);
+        promotionBannerCnts.el.addEventListener("mouseenter", function () {
+            promotionBannerCnts.autoplay.stop();
+        });
+        promotionBannerCnts.el.addEventListener("mouseleave", function () {
+            if (!video_playing) {
+                promotionBannerCnts.autoplay.start();
+            }
+        });
+        $(".promotionBannerPagination").on("mouseenter", function () {
+            promotionBannerCnts.autoplay.stop();
+        });
+        $(".promotionBannerPagination").on("mouseleave", function () {
+            if (!video_playing) {
+                promotionBannerCnts.autoplay.start();
+            }
+        });
+        $(".promotionNavigation .swiper-button-prev").on("click", function () {
+            if (video_playing) stopVideo();
+            promotionBannerPaginationPrev();
+            $h.a2s.sendClickLog("P_MAIN", '{"Name":"HomeBanner","Type":"Prev"}');
+        });
+        $(".promotionNavigation .swiper-button-prev").attr('obj', 'P_MAIN');
+        $(".promotionNavigation .swiper-button-prev").attr('opt', '{"Name":"HomeBanner","Type":"Prev"}');
+
+        $(".promotionNavigation .swiper-button-next").on("click", function () {
+            if (video_playing) stopVideo();
+            promotionBannerPaginationNext();
+            $h.a2s.sendClickLog("P_MAIN", '{"Name":"HomeBanner","Type":"Next"}');
+        });
+        $(".promotionNavigation .swiper-button-next").attr('obj', 'P_MAIN');
+        $(".promotionNavigation .swiper-button-next").attr('opt', '{"Name":"HomeBanner","Type":"Next"}');
+
+        $('.swiper-pagination-bullet').on('click', function () {
+            if (video_playing) stopVideo();
+            $h.a2s.sendClickLog("P_MAIN", '{"Name":"HomeBanner","Type":"Page"}');
+        });
+        $(".swiper-pagination-bullet").attr('obj', 'P_MAIN');
+        $(".swiper-pagination-bullet").attr('opt', '{"Name":"HomeBanner","Type":"Page"}');
+
+    };
+    var promotionRandom = function () {
+        promotionbannerItem = promotionBannerList.item;
+        promotionbannerItemlength = promotionbannerItem.length;
+        var random = Math.floor(Math.random() * promotionbannerItemlength);
+        document.getElementById("promotionBannerCnts").innerHTML = bannerRandomCnts(random);
+        $(".promotionBanner").addClass("promotionRandom");
+    };
+    var isIE = function () {
+        var myNav = navigator.userAgent.toLowerCase();
+        return (myNav.indexOf('msie') != -1) ? parseInt(myNav.split('msie')[1]) : false;
+    };
+
+    return {
+        callChangeLayout: function () {
+            if (isIE() && isIE() < 10) promotionRandom();
+            else promotionSwiper();
+
+            var tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api";
+            var firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        }
+    };
+})();
+
+gameData = [];
+genreData = [];
+hashtagData = [];
+MyInfo = { MemberSN: 0 };
+
+function layerClose(e, name) {
+    var $el = $("." + name);
+    if (!$el.is(e.target) && $el.has(e.target).length === 0) {
+        $("html").off("click", layerClose);
+        $el.removeClass(name + "Open");
+    }
+}
+
+function layerToggle(name, el) {
+    var $el = $(el).closest("." + name);
+    if ($el.hasClass(name + "Open")) {
+        $el.removeClass(name + "Open");
+    } else {
+        $("html").on("click", function (e) {
+            layerClose(e, name)
+        });
+        $el.addClass(name + "Open");
+    }
+}
+
+function drawNewGameCard(game, promotionText) {
+    var root = $('.newGame ul');
+
+    var li = $('<li>');
+    var div = $('<div>').addClass('game');
+
+    var linkTarget = "_self";
+    if (game.extendGameInfo.gameWebUrl.hasOwnProperty('pcSiteOpenType') && game.extendGameInfo.gameWebUrl.pcSiteOpenType === 2) linkTarget = "_blank";
+    var anchor = $('<a>')
+        .attr({
+            a2s: 'click',
+            obj: 'P_MAIN',
+            opt: '{"Name":"NewGameList","GameCode":"' + game.basicGameInfo.gameCode + '"}',
+            href: game.extendGameInfo.gameWebUrl.pcSiteUrl,
+            target: linkTarget
+        });
+
+    var gameState = $('<span>').addClass('gameState');
+    if (game.basicGameInfo.stateList.length > 0) {
+        drawStateIcon(gameState, game);
+    }
+
+    var gameImg = $('<span>').addClass('gameImg');
+    gameImg.append('<img src="' + getGameImage(game.extendGameInfo.gameImageList, 'fileNewGame') + '" width="140" height="180" alt="">');
+
+    var gameInfo = $('<span>').addClass('gameInfo');
+    var gameName = $('<span class="gameName"><span>' + game.basicGameInfo.gameName.replace('|br|', '<br/>') + '</span></span>');
+
+    var gameDevice = $('<span>').addClass('gameDevice');
+    var isSupportPC = game.basicGameInfo.appType.includes(1);
+    var isSupportMobile = game.basicGameInfo.appType.includes(2);
+    var isSupportConsole = game.basicGameInfo.appType.includes(3);
+
+    if (isSupportPC) {
+        gameDevice.append('<span class="iconOS iconPC"></span>');
+    }
+    if (isSupportMobile) {
+        gameDevice.append('<span class="iconOS iconMobile"></span>');
+    }
+    if (isSupportConsole) {
+        gameDevice.append('<span class="iconOS iconConsole"></span>');
+    }
+
+    gameDevice.append($('<span>').addClass('gameGenre').text(game.basicGameInfo.genreDetail));
+
+    gameInfo.append(gameName).append(gameDevice);
+
+    var gamePeriod = $('<span>').addClass('gamePeriod');
+    gamePeriod.append(promotionText);
+
+    anchor.append(gameState).append(gameImg).append(gameInfo).append(gamePeriod);
+    div.append(anchor);
+    li.append(div);
+
+    root.append(li);
+}
+
+function drawGameMainCard(game) {
+    var pc_ul = $('.allGame ul.pc');
+
+    var div = $('<div class="game"></div>');
+
+    // 게임 이미지
+    var img_url = '';
+    var gif_url = '';
+
+    var li = $('<li></li>');
+    $.each(game.extendGameInfo.gameImageList, function (i, img) {
+        if (img.gameImageType === 'fileDelegate') img_url = img.imageUrl;
+        if (img.gameImageType === 'fileGifImage') gif_url = img.imageUrl;
+    });
+    if (img_url == '') img_url = "https://ssl.nexon.com/s2/p3/etc/gameimg_default_155.png";
+
+    // 게임 PC사이트 URL
+    var link_url = game.extendGameInfo.gameWebUrl.pcSiteUrl;
+    if (game.extendGameInfo.gameWebUrl.cardBannerUrl != null && game.extendGameInfo.gameWebUrl.cardBannerUrl != '') {
+        link_url = game.extendGameInfo.gameWebUrl.cardBannerUrl;
+    }
+    var linkTarget = "_self";
+    if (game.extendGameInfo.gameWebUrl.hasOwnProperty('pcSiteOpenType') && game.extendGameInfo.gameWebUrl.pcSiteOpenType === 2) linkTarget = "_blank";
+
+    var gameImg = $('<span class="gameImg"><img src="' + img_url + '" data-img="' + img_url + '" data-gif="' + gif_url + '" width="302" height="200" alt=""></span>');
+    // 게임명
+    var gameName = $('<span class="gameName"><a href="' + link_url + '" target="' + linkTarget + '" onclick="sendClick2Log(this);" obj="P_MAIN" opt=\'{"Name":"AllGameList","Type":"CardView_Game","GameCode":"' + game.basicGameInfo.gameCode + '"}\'><span>' + game.basicGameInfo.gameName.replace('|br|', '') + '</span></a></span>');
+
+    var gamePeriod = $('<span class="gamePeriod"></span>');
+    if (game.basicGameInfo.gameName.replace('|br|', '').length >= 19) { //제목 2줄 class 추가
+        gamePeriod.addClass('gamePeriodNarrow');
+    }
+    if (game.displayDesc.includes('span') && game.displayDesc.includes('EVENT')) {
+        gamePeriod.append('<span class="event">EVENT</span>');
+    }
+    gamePeriod.append('<span class="gameGenre">' + game.basicGameInfo.genreDetail + '</span>');
+
+    // 게임 아이콘, basicGameInfo.supportOS
+    var gameDeco = $('<span class="gameDeco"></span>');
+
+    // 상태 아이콘 노출
+    if (game.basicGameInfo.stateList.length > 0) {
+        var gameState = $('<span class="gameState"></span>');
+        drawStateIcon(gameState, game);
+        gameDeco.append(gameState);
+    }
+
+    // 게임 지원 디바이스
+    var gameDevice = $('<span class="gameDevice"></span>');
+    var osList = [
+        {
+            iconClass: 'iconPC',
+            isSupport: game.basicGameInfo.appType.includes(1),
+            links: {
+                NEXON: {
+                    url: game.extendGameInfo.gameWebUrl.pcSiteUrl,
+                    target: game.extendGameInfo.gameWebUrl.pcSiteOpenType == 1 ? '_self' : '_blank',
+                    type: 'NEXON',
+                },
+                STEAM: {
+                    url: getGameETCUrl(game.extendGameInfo.etcUrlInfos, 'steam'),
+                    type: 'STEAM',
+                },
+                EPIC: {
+                    url: getGameETCUrl(game.extendGameInfo.etcUrlInfos, 'epic'),
+                    type: 'EPIC',
+                },
+            },
+        },
+        {
+            iconClass: 'iconMobile',
+            isSupport: game.basicGameInfo.appType.includes(2),
+            links: {
+                'Google Play': {
+                    url: getGameStoreUrl(game.extendGameInfo.storeList, 'googlestore'),
+                    type: 'GooglePlay',
+                },
+                'App Store': {
+                    url: getGameStoreUrl(game.extendGameInfo.storeList, 'appkor'),
+                    type: 'AppStore',
+                },
+                'ONE Store': {
+                    url: getGameStoreUrl(game.extendGameInfo.storeList, 'onestore'),
+                    type: 'ONEstore',
+                },
+                'Galaxy Store': {
+                    url: getGameStoreUrl(game.extendGameInfo.storeList, 'galaxystore'),
+                    type: 'GalaxyStore',
+                },
+            },
+        },
+        {
+            iconClass: 'iconConsole',
+            isSupport: game.basicGameInfo.appType.includes(3),
+            links: {
+                XBOX: {
+                    url: getGameETCUrl(game.extendGameInfo.etcUrlInfos, 'xbox'),
+                    type: 'XBOX',
+                },
+                PlayStation: {
+                    url: getGameETCUrl(game.extendGameInfo.etcUrlInfos, 'playstation'),
+                    type: 'PlayStation',
+                },
+                SWITCH: {
+                    url: getGameETCUrl(game.extendGameInfo.etcUrlInfos, 'switch'),
+                    type: 'SWITCH',
+                },
+                SWITCH2: {
+                    url: getGameETCUrl(game.extendGameInfo.etcUrlInfos, 'switch2'),
+                    type: 'SWITCH2',
+                },
+            }
+        },
+    ];
+
+    $.each(osList, function (i, os) {
+        if (os.isSupport) {
+            var noLink = Object.values(os.links).every(function (item) {
+                return item.url == '';
+            });
+            
+            var iconWrapper = $('<span class="iconWrapper"></span>')
+                .append('<span class="iconOS ' + os.iconClass + '"/>');
+
+            if (noLink) {
+                iconWrapper.addClass('noLink');
+            }
+
+            var tooltipWrapper = $('<span class="iconTooltipWrapper"/>');
+            var tooltip = $('<div class="iconTooltip"/>');
+
+            for (var linkType in os.links) {
+                var linkValue = os.links[linkType];
+                if (linkValue.url == '') {
+                    continue;
+                }
+                var target = linkValue.target || '_blank';
+                var links = $('<a class="iconTooltipText">' + linkType + '</a>')
+                    .attr('href', linkValue.url)
+                    .attr('target', target);
+                (function (i) {
+                    links.on('click', function () {
+                        console.log(game.basicGameInfo.gameCode);
+                        $h.a2s.sendClickLog('P_MAIN', '{"Name":"AllGameList","Type":"' + i.type + '","GameCode":"' + game.basicGameInfo.gameCode + '"}');
+                    });
+                })(linkValue)
+                tooltip.append(links);
+            }
+
+            tooltipWrapper.append(tooltip);
+            iconWrapper.append(tooltipWrapper);
+            gameDevice.append(iconWrapper);
+        }
+    })
+
+    gameDeco.append(gameDevice);
+
+    // 커뮤니티
+    if (game.extendGameInfo.snsChannelList.length > 0) {
+        var gameCommunity = $('<span class="gameCommunite"></span>');
+        var iconClass = '';
+        var iconName = '';
+        switch (game.extendGameInfo.snsChannelList[0].channel) {
+            case 'nexonforum':
+                iconClass = 'iconNexon';
+                iconName = '넥슨포럼';
+                break;
+            case 'navercafe':
+                iconClass = 'iconNaver';
+                iconName = '네이버카페';
+                break;
+            case 'facebook':
+                iconClass = 'iconFacebook';
+                iconName = '페이스북';
+                break;
+            case 'twitter':
+                iconClass = 'iconTwitter';
+                iconName = '트위터';
+                break;
+            case 'youtube':
+                iconClass = 'iconYoutube';
+                iconName = '유튜브';
+                break;
+        }
+        var comuA = $('<a href="' + game.extendGameInfo.snsChannelList[0].channelUrl + '" target="_blank" onclick="sendClick2Log(this);" obj=\"P_MAIN\" opt=\'{"Name":"AllGameList","Type":"Community","GameCode":"' + game.basicGameInfo.gameCode + '"}\'></a>');
+        comuA.append('<span class="icon ' + iconClass + '"></span><span class="acchidden">' + iconName + '</span>');
+        gameCommunity.append(comuA);
+
+        gameDeco.append(gameCommunity);
+    }
+    var gameCheck = $('<span class="gameCheck"></span>');
+
+
+    // 점검 or 사전다운로드
+    if (game.extendGameInfo.maintenance && game.extendGameInfo.maintenance.isMaintenance) {
+        // 일반 점검
+        if (game.extendGameInfo.maintenance.type === "MAINTENANCE") {
+            var endAt = "";
+
+            // 종료일자 포함 시
+            if (!game.extendGameInfo.maintenance.isIndefinite && game.extendGameInfo.maintenance.endAt) {
+                endAt = new Date(game.extendGameInfo.maintenance.endAt)
+                endAt = endAt.getMonth() + 1 + "/" + endAt.getDate() + " " + String(endAt.getHours()).padStart(2, '0') + ":" + String(endAt.getMinutes()).padStart(2, '0') + " 완료예정"
+            }
+            gameCheck.append('<span class="iconMaintenance"></span><span>점검중</span> ' + endAt);
+        }
+        // 사전 다운로드
+        else if (game.extendGameInfo.maintenance.type === "PRE_DOWNLOAD") {
+            var endAt = "";
+
+            if (!game.extendGameInfo.maintenance.isIndefinite && game.extendGameInfo.maintenance.endAt) {
+                endAt = new Date(game.extendGameInfo.maintenance.endAt)
+                endAt = endAt.getMonth() + 1 + "/" + endAt.getDate() + " " + String(endAt.getHours()).padStart(2, '0') + ":" + String(endAt.getMinutes()).padStart(2, '0') + " 까지"
+            }
+            gameCheck.append('<span class="iconPreDownload"></span><span>사전다운로드</span> ' + endAt);
+        }
+    }
+
+    if (gif_url != '') {
+        div.addClass('aniGif');
+        div.append(gameImg).append('<span class="cateGif">GIF</span>').append(gameName).append(gamePeriod).append(gameDeco).append(gameCheck);
+    } else {
+        div.append(gameImg).append(gameName).append(gamePeriod).append(gameDeco).append(gameCheck);
+    }
+
+    li.append(div);
+    pc_ul.append(li);
+
+    // 게임 디바이스 툴팁 위치 조정
+    changeGameDeviceTooltipPosition();
+    window.addEventListener('resize', changeGameDeviceTooltipPosition);
+
+    // A2S 셋팅
+    var tm = 0;
+    $('.game.aniGif').bind('mouseenter', function (e) {
+        var el = e.currentTarget;
+        var img = el.children[0].children[0];
+        if (!mouseIN) {
+            mouseIN = true;
+            var gif_url = $(img).data('gif');
+            if (gif_url != '') {
+                st = setInterval(function () {
+                    if (tm > 500) {
+                        $(img).attr('src', gif_url);
+                        $(el).addClass('aniGifPlay');
+                        clearInterval(st);
+                    } else {
+                        tm = tm + 100;
+                    }
+                }, 100);
+            }
+        }
+    });
+    $('.game.aniGif').bind('mouseleave', function (e) {
+        var el = e.currentTarget;
+        var img = el.children[0].children[0];
+        var img_url = $(img).data('img');
+        if (img_url != '') {
+            $(img).attr('src', img_url);
+            $(el).removeClass('aniGifPlay');
+            clearInterval(st);
+            tm = 0;
+        }
+        mouseIN = false;
+    });
+}
+
+function drawSimpleMainCard(game) {
+    var pc_ul = $('.allGame ul.pc');
+    var img_url = '';
+
+    $.each(game.extendGameInfo.gameImageList, function (i, img) {
+        if (img.gameImageType === 'fileGnbDirect') img_url = img.imageUrl; // GNB 썸네일 이미지
+    });
+
+    var linkTarget = "_self";
+    if (game.extendGameInfo.gameWebUrl.hasOwnProperty('pcSiteOpenType') && game.extendGameInfo.gameWebUrl.pcSiteOpenType === 2) linkTarget = "_blank";
+
+    var li = $('<li></li>');
+    var div = $('<div class="game"></div>');
+    var a = $('<a>')
+        .attr({
+            a2s: 'click',
+            obj: 'P_MAIN',
+            opt: '{"Name":"AllGameList","Type":"ListView_Game","GameCode":"' + game.basicGameInfo.gameCode + '"}',
+            href: game.extendGameInfo.gameWebUrl.pcSiteUrl,
+            target: linkTarget
+        });
+    var gameImg = $('<span class="gameImg"><img src="' + img_url + '" width="32" height="32" alt=""></span>');
+    var gameName = $('<span class="gameName">' + game.basicGameInfo.gameName.replace('|br|', '') + '</span>');
+    var gameState = $('<span class="gameState"></span>');
+
+    if (game.basicGameInfo.stateList.length > 0) drawStateIcon(gameState, game);
+
+    a.append(gameImg).append(gameName).append(gameState);
+    div.append(a);
+    li.append(div);
+
+    if ($('#all').prop('checked') && $('.search input[type=text]').val() == '') {
+        var genreUL = $('#simpleUL_' + game.basicGameInfo.genreSN[0]);
+        if (genreUL.length > 0) {
+            genreUL.append(li);
+        }
+    } else {
+        pc_ul.append(li);
+    }
+}
+
+function drawStateIcon(gameState, game) {
+    $.each(game.basicGameInfo.stateList, function (i, state) {
+        if (state.stateName != '0' && state.stateName != '') {
+            switch (state.stateName) {
+                case 'TEST':
+                case 'ALPHA':
+                case 'CBT':
+                case 'OBT':
+                case '사전예약':
+                case '사전다운로드':
+                case '테스터모집':
+                case 'EARLY ACCESS':
+                case 'PRE-CBT':
+                case 'PRE-OBT':
+                    // 파란색 아이콘
+                    gameState.append('<span class="early">' + state.stateName + '</span>');
+                    break;
+                case 'TEASER':
+                case 'OPEN':
+                case 'NEW':
+                case 'REBOOT':
+                    // 빨간색 아이콘
+                    gameState.append('<span class="reboot">' + state.stateName + '</span>');
+                    break;
+                case 'UPDATE':
+                    // 초록색 아이콘
+                    gameState.append('<span class="update">' + state.stateName + '</span>');
+                    break;
+                default:
+                    gameState.append('<span>' + state.stateName + '</span>');
+                    break;
+            }
+        }
+    });
+}
+
+//type [genre, gamename, state, hashtag]
+function setGameList(filter, filter_type, filter_name) {
+    if ($OASIS.Cookie.get('M_VT') == 'thumbnailView' || $OASIS.Cookie.get('M_VT') == '') {
+        $('#thumbnail').prop('checked', 'checked');
+    } else {
+        $('#list').prop('checked', 'checked');
+    }
+
+    var ul_pc = $('.allGame ul.pc');
+    ul_pc.empty();
+    var filter_game = [];
+    ul_pc.addClass('filtering');
+    if (filter_type === 'genre') {
+        $h.a2s.sendClickLog('P_MAIN', '{"Name":"AllGameList","Type":"Filter_Active","Value":"' + filter_name + '"}');
+        if (filter == 'all') {
+            setGameList('', 'all');
+        } else {
+            $.each(gameData, function (i, game) {
+                if (game.basicGameInfo.genreSN.includes(Number(filter))) {
+                    filter_game.push(game);
+                }
+            });
+        }
+    } else if (filter_type === 'gamename') {
+        $h.a2s.sendClickLog('P_MAIN', '{"Name":"AllGameList","Type":"Search","Value":"' + filter + '"}')
+        // GTM
+        window.dataLayer.push({ event: 'AllGameList_Search' });
+        if (filter == '') {
+            // 전체게임
+            setGameList('', 'all');
+        } else {
+            $.each(gameData, function (i, game) {
+                if ($OASIS.String.trimAll(game.basicGameInfo.gameName.toLowerCase()).includes($OASIS.String.trimAll(filter.toLowerCase())) || $OASIS.String.trimAll(game.basicGameInfo.synonym.toLowerCase()).includes($OASIS.String.trimAll(filter.toLowerCase()))) {
+                    filter_game.push(game);
+                }
+            });
+        }
+    } else if (filter_type === 'state') {
+        $h.a2s.sendClickLog('P_MAIN', '{"Name":"AllGameList","Type":"Filter_Active","Value":"' + filter_name + '"}')
+        if (filter == 'event') {
+            $.each(gameData, function (i, game) {
+                if (game.basicGameInfo.hasEvent == true) {
+                    filter_game.push(game);
+                }
+            });
+        } else {
+            $.each(gameData, function (i, game) {
+                filter_game.push(game);
+            });
+        }
+    } else if (filter_type === 'hashtag') {
+        $h.a2s.sendClickLog('P_MAIN', '{"Name":"AllGameList","Type":"Filter_Active","Value":"' + filter_name + '"}')
+        var tag = $(hashtagData).filter(function (i, hashtag) {
+            return hashtag.HashtagSN == filter;
+        });
+        if (tag.length > 0) {
+            $.each(tag[0].GameCode, function (i, gamecode) {
+                var game = $(gameData).filter(function (i, g) { return g.gameCode === gamecode; });
+                if (game.length > 0) {
+                    filter_game.push(game[0]);
+                }
+            });
+        }
+    } else if (filter_type === 'os') {
+        $h.a2s.sendClickLog('P_MAIN', '{"Name":"AllGameList","Type":"Filter_Active","Value":"' + filter_name + '"}')
+        $.each(gameData, function (i, game) {
+            if (game.basicGameInfo.supportOS.includes(filter)) {
+                filter_game.push(game);
+            }
+        });
+    } else {
+        // 전체 검색
+        $('#all').prop('checked', 'checked');
+        $('.search input[type=text]').val('');
+        $.each(gameData, function (i, game) {
+            filter_game.push(game);
+        });
+        if ($('#list').prop('checked')) {
+            $.each(genreData, function (i, genre) {
+                var li = $('<li></li>');
+                var h4 = $('<h4>' + genre.genreName + '</h4>');
+                var ul = $('<ul id="simpleUL_' + genre.genreSN + '"></ul>');
+                if (genre.genreName == 'RPG') {
+                    li.addClass('col3');
+                } else {
+                    li.addClass('col1');
+                }
+                li.append(h4).append(ul);
+
+                $('.allGame ul.pc').append(li);
+            });
+        } else {
+            $('.allGame ul.pc').empty();
+        }
+        ul_pc.removeClass('filtering');
+    }
+
+    if ($('#thumbnail').prop('checked')) {
+        $('.allGame ul.pc').removeClass('listView').addClass('cardView');
+        $('#pcGame a').show();
+    }
+    if ($('#list').prop('checked')) {
+        $('.allGame ul.pc').removeClass('cardView').addClass('listView');
+        $('#pcGame a').hide();
+    }
+    $.each(filter_game, function (i, game) {
+        if ($('#thumbnail').prop('checked')) {
+            drawGameMainCard(game);
+        } else {
+            drawSimpleMainCard(game);
+        }
+    });
+
+    if ($('.allGame ul.pc').children().length <= 0) {
+        var li = $('<li class="none"></li>');
+        var str = null;
+        switch (filter_type) {
+            case 'gamename':
+                str = '<strong>\'' + HomeHelper.subStringByByte(filter, 50) + '\'</strong>에 대한 검색 결과가 없습니다.';
+                break;
+            default:
+                str = '선택한 조건의 검색결과가 없습니다.<br/>다른 조건으로 검색해주세요.';
+                break;
+        }
+        var button = $('<button type="button" onclick="sendClick2Log(this);" obj="P_MAIN" opt=\'{"Name":"AllGameList","Type":"PC_SearchCancel"}\'>검색초기화</button>');
+
+        li.append(str).append(button);
+        button.bind('click', function () {
+            $('#all').prop('checked', 'checked'); $('.search input[type=text]').val(''); setGameList('', 'all');
+        });
+        $('.allGame ul.pc').append(li);
+    }
+}
+
+//myInfo > banner
+function drawMyInfoBanner() {
+    var divPlccBanner = $('div.plcc-banner');
+    if (divPlccBanner) {
+        divPlccBanner.css('visibility', 'visible');
+    }
+}
+
+function drawMyInfoPrime(myinfo) {
+    if (myinfo.info.isPrime) {
+        $('.myInfo .subTitle .bt').prepend('<a href="' + Home.domain.primeurl + '" class="btPrime" onclick="sendClick2Log(this);" obj="P_MAIN" opt=\'{"Name":"Personalization","Type":"Prime"}\'><span class="icon"></span>PRIME</a>');
+    }
+}
+
+function drawMyInfoTitle(data) {
+    var logout = $('<a href="#" onclick="sendClick2Log(this); NgbLogin.Logout(location.href)" obj="P_MAIN" opt=\'{"Name":"Personalization","Type": "Logout" }\'>로그아웃</a>');
+    $('.myInfo .subTitle .bt .securityCenter').remove();
+    $(".myInfo .subTitle .bt .findPCbang").remove();
+    if (data) {
+        $('.myInfo .title h2').html('<span>' + data.UserNick + '</span> 님, 어서오세요');
+        $('.myInfo .title').append($('<p><span>' + data.LastLoginedDateTime + '</span> <a href="' + data.LoginHistory + '" onclick="sendClick2Log(this);" obj="P_MAIN" opt=\'{"Name":"Personalization","Type":"LoginLog"}\'>로그인내역</a></p>'));
+        $('.myInfo .subTitle .bt').append('<a href="' + data.MyInfoUrl + '" onclick="sendClick2Log(this);" obj="P_MAIN" opt=\'{"Name":"Personalization","Type":"My_Member"}\'>내정보</a>');
+        $('.myInfo .subTitle .bt').append(logout);
+    } else {
+        $('.myInfo .title h2').html('어서오세요');
+        $('.myInfo .subTitle .bt').append(logout);
+    }
+    var couponBox = $('<a href="#" obj="P_MAIN" opt=\'{"Name":"Personalization","Type":"MyCoupon"}\'>쿠폰함</a>');
+    couponBox.click(function () {
+        sendClick2Log(this);
+        window.Home.Components['Storage'].fetchData('couponUrlData');
+        return false;
+    })
+    logout.before(couponBox);
+
+    window.Home.Components['Storage'].addSubscriber({
+        label: 'couponUrlData',
+        callback: function (data) {
+            var couponUrl = data ? data : Home.domain.boxurl + '/CouponBox';
+            var width = 530;
+            var height = 831;
+            var leftPos = (document.body.offsetWidth - width) / 2 + window.screenLeft;
+            var topPos = (document.body.offsetHeight - height) / 2 < 0 ? document.body.offsetHeight / 2 : (document.body.offsetHeight - height) / 2;
+            window.open(couponUrl, '_blank', 'width=' + width + ',height=' + height + ',left=' + leftPos + ',top=' + topPos);
+        }
+    });
+}
+
+function drawMyInfoCash(data) {
+    if (data) {
+        $('.stateCash.nexoncash').text(data.CashBalance);
+        $('.stateCash.playpoint').text(data.PointBalance);
+
+        $('#btnCash').attr('href', data.CashUrl);
+        $("#btnCharge").removeClass('disabled');
+        $("#btnCharge").attr('href', '#');
+        $("#btnCharge").click(function (e) {
+            window.open(Home.domain.oasisapi + '/account/cashcharge', 'NXRIPAY', 'width=840,height=620,toolbar=no,status=no,directories=no,scrollbars=no,location=no,resizable=no,menubar=no');
+            return false;
+        });
+        $("#autoCharge").removeClass('disabled');
+        $("#autoCharge").attr('href', '#');
+        $("#autoCharge").click(function (e) {
+            window.open(Home.domain.oasisapi + '/account/autocharge', 'NXJMONEY', 'width=954,height=700,scrollbars=1,resizable=1');
+            return false;
+        });
+    }
+}
+
+function drawMyInfoSecurity(myinfo) {
+    if (myinfo.info) {
+        if (myinfo.info.SecurityGrade) {
+            var grades = ['A', 'B', 'C', 'D'];
+            var gradeMessages = ['정상', '주의', '경고', '위험'];
+            if (myinfo.info.SecurityGrade.Grade && grades.indexOf(myinfo.info.SecurityGrade.Grade) != -1) {
+                $('#pSecurityLevel').removeClass('security');
+                $('#pSecurityLevel').addClass('security' + myinfo.info.SecurityGrade.Grade);
+                $('#pSecurityLevel span:eq(0)').text(myinfo.info.SecurityGrade.Grade);
+                var i = grades.indexOf(myinfo.info.SecurityGrade.Grade);
+                $('#pSecurityLevel span:eq(2)').text(gradeMessages[i]);
+            }
+
+            if (myinfo.info.SecurityMessage) {
+                var securityMsgAnchor = $('<a>')
+                    .attr({
+                        href: 'https://security.nexon.com',
+                        a2s: 'click',
+                        obj: 'P_MAIN',
+                        opt: '{"Name":"Personalization","Type":"Security_MSG"}'
+                    })
+                    .text((myinfo.info.SecurityMessage.length > 22) ? (myinfo.info.SecurityMessage.substring(0, 22) + '...') : myinfo.info.SecurityMessage);
+                $('#dvHomeSecurityMsg').append(securityMsgAnchor);
+            }
+        }
+    }
+}
+
+function newGameExecute(data) {
+    if (data.newGames.length > 0) {
+        $.each(data.newGames, function (i, newGame) {
+            $.each(gameData, function (ii, game) {
+                if (game.appSN == newGame.appSN) {
+                    drawNewGameCard(game, newGame.promotionText);
+                }
+            });
+        });
+        $('.newGame').show();
+    }
+}
+
+function mainDataExecute(mainData) {
+    if (mainData.gameList.length > 0) {
+        gameData = mainData.gameList; // 게임 리스트
+        genreData = mainData.genreList; // 장르 리스트            
+        hashtagData = mainData.hashTagList;// 해시태그 리스트
+
+        // 해시태그 랜더링
+        $.each(hashtagData, function (i, hashtag) {
+            var filter = $('<span></span>');
+            var filter_input = $('<input type="radio" name="filter" obj="P_MAIN" opt=\'{"Name":"AllGameList","Type":"Filter_Active","Value":"' + hashtag.Hashtag + '"}\' data-selector="hashtag" data-name="' + hashtag.Hashtag + '" value="' + hashtag.HashtagSN + '" id="hashtag_' + hashtag.HashtagSN + '"><label for="hashtag_' + hashtag.HashtagSN + '">#' + hashtag.Hashtag + '</label></span>');
+            filter.append(filter_input);
+            if (i == 0) {
+                $('.platform span').first().after(filter);
+            } else {
+                $('.platform span').last().after(filter);
+            }
+
+        });
+
+        // 지원OS 랜더링
+        var osData = [
+            { osKey: "window", osName: "Windows" },
+            { osKey: "mac", osName: "macOS" },
+            { osKey: "steam", osName: "Steam" },
+            { osKey: "epic", osName: "EPIC" },
+            { osKey: "android", osName: "Android" },
+            { osKey: "ios", osName: "iOS" },
+            { osKey: "playstation", osName: "PlayStation" },
+            { osKey: "xbox", osName: "XBOX" },
+            { osKey: "switch", osName: "SWITCH" },
+            { osKey: "switch2", osName: "SWITCH2" },
+        ];
+        $.each(osData, function (i, os) {
+            var filter = $('<span></span>');
+            var filter_input = $('<input type="radio" name="filter" obj="P_MAIN" opt=\'{"Name":"AllGameList","Type":"Filter_Active","Value":"' + os.osName + '"}\' data-selector="os" data-name="' + os.osName + '" value="' + os.osKey + '" id="os_' + os.osKey + '"><label for="os_' + os.osKey + '">#' + os.osName + '</label></span>');
+            filter.append(filter_input);
+            $('.platform span').last().after(filter);
+        });
+
+        // 장르 렌더링
+        $.each(genreData, function (i, genre) {
+            var filter = $('<span></span>');
+            var filter_input = $('<input type="radio" name="filter" obj="P_MAIN" opt=\'{"Name":"AllGameList","Type":"Filter_Active","Value":"' + genre.genreName + '"}\' data-selector="genre" data-name="' + genre.genreName + '" value="' + genre.genreSN + '" id="genre_' + genre.genreSN + '"><label for="genre_' + genre.genreSN + '">#' + genre.genreName + '</label></span>');
+            filter.append(filter_input);
+            $('.platform span').last().after(filter);
+        });
+
+        setGameList('0', 'all');
+        if ($('#thumbnail').prop('checked')) {
+            $h.a2s.sendContentsLog('P_MAIN', '{"Name":"AllGameList","Type":"CardView"}');
+        } else {
+            $h.a2s.sendContentsLog('P_MAIN', '{"Name":"AllGameList","Type":"ListView"}');
+        }
+
+        $('.platform span').last().after($('<span><input type="radio" name="filter" obj="P_MAIN" opt=\'{"Name":"AllGameList","Type":"Filter_Active","Value":"event"}\' data-selector="state" data-name="EVENT" value="event" id="state_event"><label for="state_event">#이벤트</label></span>'));
+
+        $('input[name="filter"]:radio').bind('click', function () {
+            setGameList(this.value, $(this).data('selector'), $(this).data('name'));
+            $('.search input[type=text]').val('');
+        });
+    }
+}
+
+function noticeExecute(data) {
+    if (data.noticeList.length > 0) {
+        $('.notice').append('<a href="' + Home.domain.noticeurl + '/Notice/NoticeView?sn=' + data.noticeList[0].noticesn + '&maskgamecode=65536" onclick="sendClick2Log(this);" obj="P_MAIN" opt=\'{"Name":"Footer","Type":"Notice"}\'>' + data.noticeList[0].noticecodename + ' ' + data.noticeList[0].title + '</a>');
+    } else {
+        $('.notice').remove();
+    }
+}
+
+function myInfoExecute(sn) {
+    if (NXMember.IsLogin()) {
+        window.Home.Components['Storage'].addParam({
+            label: 'myInfoData',
+            key: 'sn',
+            value: sn
+        });
+        window.Home.Components['Storage'].addSubscriber({
+            label: 'myInfoData',
+            callback: function (data) {
+                drawMyInfoPrime(data);
+                drawMyInfoSecurity(data);
+            }
+        });
+        window.Home.Components['Storage'].fetchData('myInfoData');
+    }
+}
+
+function personalizationExecute(mainData) {
+    if (NXMember.IsLogin()) {
+        $OASIS.Cookie.set("M_JL", '1', 365);
+
+        $('.myInfo').addClass('statelogin');
+        $('.myInfo .login').hide();
+        $('.myInfo .logged').show();
+        $('.myInfo .plcc-banner').hide();
+
+        //recommendGame > 
+        window.Home.Components['Storage'].addSubscriber({
+            label: 'accountData',
+            callback: function (data) {
+                var sn = (data) ? data.MemberSN : window.HomeHelper.getMemberSN();
+                drawMyInfoTitle(data);
+
+                callMyGame(mainData, sn);
+                myInfoExecute(sn);
+            }
+        });
+        window.Home.Components['Storage'].fetchData('accountData');
+
+        //logged > cash
+        window.Home.Components['Storage'].addSubscriber({
+            label: 'accountCashData',
+            callback: function (data) {
+                drawMyInfoCash(data);
+            }
+        });
+        window.Home.Components['Storage'].fetchData('accountCashData');
+    } else {
+        $('.myInfo .login').show();
+        $('.myInfo .logged').hide();
+        $('.myInfo .plcc-banner').show();
+
+        if ($OASIS.Cookie.get("M_JL") == '') {
+            $('.join .tooltipCnts').append('<a href="' + Home.domain.memberurl + '/join/join.aspx" onclick="sendClick2Log(this);" obj="P_MAIN" opt=\'{"Name":"Personalization","Type":"JoinLayer"}\'>지금 넥슨 회원가입하시고 <strong>' + gameData.length + '개 넥슨게임을 무료</strong>로 플레이하세요</a>');
+            $('.join .tooltip').removeClass('tooltipClose').addClass('tooltipOpen');
+            $h.a2s.sendContentsLog('P_MAIN', '{"Name":"Personalization","Type":"JoinLayer"}');
+        } else {
+            $('.join .tooltip').removeClass('tooltipOpen').addClass('tooltipClose');
+        }
+
+        callMyGame(mainData, 0);
+        drawMyInfoBanner();
+    }
+}
+
+(function () {
+    //main data
+    window.Home.Components['Storage'].addSubscriber({
+        label: 'mainData',
+        callback: function (data) {
+            if (data) {
+                mainDataExecute(data);
+
+                //contents > newGame
+                window.Home.Components['Storage'].addSubscriber({
+                    label: 'newGameData',
+                    callback: function (data) {
+                        newGameExecute(data);
+                    }
+                });
+                window.Home.Components['Storage'].fetchData('newGameData');
+                
+                personalizationExecute(data);
+            } else {
+                document.location.href = 'https://bulletin.nexon.com/Home/Game.html';
+            }
+        }
+    });
+    window.Home.Components['Storage'].fetchData('mainData');
+
+    //footer > notice
+    window.Home.Components['Storage'].addSubscriber({
+        label: 'noticeData',
+        callback: function (data) {
+            noticeExecute(data);
+        }
+    });
+    window.Home.Components['Storage'].fetchData('noticeData');
+
+    //DOM event
+    if ($OASIS.Cookie.get("M_VL") == '') {
+        $($('.viewtype .tooltip')[0]).addClass('tooltipOpen');
+    }
+
+    $(".tooltip > a").on("click", function (e) {
+        e.preventDefault();
+        layerToggle("tooltip", this);
+    });
+
+    $('.viewtype input[type=radio]').on('change', function () {
+        $OASIS.Cookie.remove('M_VT');
+
+        var viewType = 'thumbnail';
+        if ($('#thumbnail').prop('checked')) viewType = 'thumbnailView';
+        else viewType = 'simpleView';
+
+        $OASIS.Cookie.set('M_VT', viewType, 365);
+
+        $('#all').prop('checked', 'checked');
+        $('.search input[type=text]').val('');
+        setGameList('', 'all');
+    });
+
+    $('.search button').bind('click', function () {
+        $('#all').prop('checked', 'checked');
+        setGameList($('.search input[type=text]').val(), 'gamename');
+    });
+
+    $('.search input[type=text]').bind('keypress', function (e) {
+        if (e.keyCode == 13) {
+            $('#all').prop('checked', 'checked');
+            setGameList($('.search input[type=text]').val(), 'gamename');
+        }
+    });
+
+    $(".language h3 a").on("click", function (e) {
+        e.preventDefault();
+        layerToggle("language", this);
+    });
+
+    $(window).scroll(function () {
+        var $floating = $(".floating");
+        var footerPosition = $(".footer").offset();
+        var topBtPositon = footerPosition.top - $(window).height();
+        var scrollPositon = $(window).scrollTop();
+
+        if (scrollPositon != 0) $floating.addClass("floatingTopBtShow");
+        else $floating.removeClass("floatingTopBtShow");
+
+        if (scrollPositon < topBtPositon) $floating.removeClass("floatingTopBtHold");
+        else $floating.addClass("floatingTopBtHold");
+    });
+})();
+
+//event
+window.onpageshow = function (event) {
+    if (event.persisted || (window.performance && window.performance.navigation.type == 2)) {
+        $('#all').prop('checked', 'checked');
+    }
+}
+
+//YouTube Player API
+function createPlayer(id) {
+    return new YT.Player('ytPlayer_' + id, {
+        videoId: id,
+        playerVars: { 'origin': $(document).prop('location').origin },
+        events: {
+            'onReady': onPlayerReady,
+            'onStateChange': onPlayerStateChange,
+            'onError': onPlayerError
+        }
+    });
+}
+
+function onYouTubeIframeAPIReady() {
+    $.each(video_ids, function (i, id) {
+        player.push(createPlayer(id));
+    });
+}
+
+function onPlayerReady(event) {
+    //event.target.playVideo();
+}
+
+function onPlayerStateChange(event) {
+    if (event.data == 1) {
+        video_playing = true;
+        promotionBannerCnts.autoplay.stop();
+    } else if (event.data == 0 || event.data == 2) {
+        video_playing = false;
+        promotionBannerCnts.autoplay.start();
+        if (event.data == 0) {
+            event.target.stopVideo();
+        }
+    }
+}
+
+function onPlayerError(event) {
+    console.log(event);
+}
+
+function stopVideo() {
+    $.each(player, function (i, el) {
+        el.stopVideo();
+    });
+}
+
+//util
+function setGifImage(target) {
+    var gif_url = $(target).data('gif');
+    if (gif_url != '') {
+        var gif_span = $('<span class="aniImg"><img src="' + gif_url + '" width="302" height="200"></span>');
+        $(target).after(gif_span);
+    }
+}
+
+function getGameNameByGameCode(gameCode) {
+    var gameName = "noName";
+    $.each(gameData, function (i, game) {
+        if (game.basicGameInfo.gameCode == gameCode) {
+            gameName = game.basicGameInfo.gameName;
+        }
+    });
+    return gameName;
+}
+
+function getIconByServiceId(serviceID) {
+    var gameIcon = "https://ssl.nexon.com/s2/p3/etc/gameimg_default_155.png";
+    $.each(gameData, function (i, game) {
+        if (game.basicGameInfo.serviceID == serviceID) {
+            gameIcon = getGameImage(game.extendGameInfo.gameImageList, 'fileGnbDirect');
+        }
+    });
+    return gameIcon;
+}
+
+function getIconByGameCode(gameCode) {
+    var gameIcon = "https://ssl.nexon.com/s2/p3/etc/gameimg_default_155.png";
+    $.each(gameData, function (i, game) {
+        if (game.basicGameInfo.gameCode == gameCode) {
+            gameIcon = getGameImage(game.extendGameInfo.gameImageList, 'fileGnbDirect');
+        }
+    });
+    return gameIcon;
+}
+
+function getGameCodeByServiceId(serviceID) {
+    var gameCode = "0";
+    $.each(gameData, function (i, game) {
+        if (game.basicGameInfo.serviceID == serviceID) {
+            gameCode = game.basicGameInfo.gameCode;
+        }
+    });
+    return gameCode;
+}
+
+function getHomeUrlByServiceId(serviceID) {
+    var homeUrl = "";
+    $.each(gameData, function (i, game) {
+        if (game.basicGameInfo.serviceID == serviceID) {
+            homeUrl = game.extendGameInfo.gameWebUrl.pcSiteUrl;
+        }
+    });
+    return homeUrl;
+}
+
+function getGameImage(img_list, img_type) {
+    var img_url = '';
+    $.each(img_list, function (i, img) {
+        if (img.gameImageType == img_type) {
+            img_url = img.imageUrl;
+        }
+    });
+    if (img_url == '') {
+        img_url = "https://ssl.nexon.com/s2/p3/etc/gameimg_default_155.png";
+    }
+    return img_url;
+}
+
+function getGameStoreUrl(storeList, type) {
+    var storeUrl = "";
+    if (storeList && storeList.length > 0) {
+        $.each(storeList, function (i, store) {
+            if (store && store.store == type) {
+                storeUrl = store.storeUrl;
+            }
+        });
+    }
+    return storeUrl;
+}
+function getGameETCUrl(etcList, os) {
+    let url = '';
+    $.each(etcList, function (index, item) {
+        if (os === item.os) {
+            url = item.url;
+            return false;
+        }
+    });
+    return url;
+}
+
+function goIconLink(obj, url, target, e) {
+    if (target === '_self') window.location.href = url;
+    else window.open(url);
+
+    sendClick2Log(obj);
+    if (e.stopPropagation) e.stopPropagation();
+}
+
+function sendClick2Log(el) {
+    $h.a2s.sendClickLog($(el).attr('obj'), $(el).attr('opt'));
+}
+
+function closeCacheCharge() {//NXRIPAY callback function
+    window.location.reload();
+};
+
+function changeGameDeviceTooltipPosition() {
+    if (window.innerWidth < 1007) return 0;
+    var deviceTooltips = $('.gameDevice .iconWrapper .iconTooltip');
+    deviceTooltips.each(function () {
+        $(this).css('left', '');
+        var tooltipWidth = $(this).width();
+        var tooltipOffsetLeft = $(this).offset().left;
+        var tooltipOffsetRight = tooltipOffsetLeft + tooltipWidth;
+        if (tooltipOffsetRight + 70 >= window.innerWidth) {
+            $(this).css('left', window.innerWidth - tooltipOffsetRight - 70 + 'px');
+        }
+    });
+}
+
+function openPCbangLink() {
+    window.open(
+      `https://pcbang.nexon.com/search`,
+      "_blank",
+      "width=800,height=800,toolbar=no,status=no,directories=no,scrollbars=no,location=no,resizable=no,menubar=no"
+    );
+  };

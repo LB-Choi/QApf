@@ -1,0 +1,183 @@
+﻿$OASIS = {
+    Cookie : {
+        get: function (name) {
+            var nameOfCookie = name + "=",
+                x = 0;
+            while (x <= document.cookie.length) {
+                var y = (x + nameOfCookie.length);
+                if (document.cookie.substring(x, y) == nameOfCookie) {
+                    if ((endOfCookie = document.cookie.indexOf(";", y)) == -1) {
+                        endOfCookie = document.cookie.length;
+                    }
+                    return unescape(document.cookie.substring(y, endOfCookie));
+                }
+                x = document.cookie.indexOf(" ", x) + 1;
+                if (x == 0) {
+                    break;
+                }
+            }
+            return "";
+        },
+        set: function (name, value, expiredays) {
+            var todayDate = new Date();
+
+            expiredays = expiredays || null;
+            if (expiredays != null) {
+                todayDate.setDate(todayDate.getDate() + expiredays);
+            }
+            document.cookie = name + "=" + escape(value) + "; path=/; domain=nexon.com;" + (expiredays != null ? ("expires=" + todayDate.toGMTString() + ";") : "");
+        },
+        remove: function (name) {
+            var todayDate = new Date();
+            todayDate.setDate(todayDate.getDate() - 1);
+            document.cookie = name + "=; path=/; domain=nexon.com; expires=" + todayDate.toGMTString() + ";";
+        },
+        removebyoption: function (name, path, domain) {
+            document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT" + (domain ? "; domain=" + domain : "") + (path ? "; path=" + path : "");
+        }
+	}, 
+	Number: {
+		numberToShortKorean: function (number) {
+			var resultString = "";
+			try {
+				var value = Number(number);
+				if (value >= 1000 && value < 10000 ) {
+					resultString = number.toString().substr(0, 1);
+					if (Number(number.toString().substr(1, 1)) > 0) {
+						resultString = resultString + "." + number.toString().substr(1, 1);
+					}
+					resultString = resultString + "천";
+				} else if (value >= 10000) {
+					var inputNumber = number < 0 ? false : number;
+					var unitWords = ["", "만", "억", "조", "경"];
+					var splitUnit = 10000;
+					var splitCount = unitWords.length;
+					var resultArray = [];
+
+					for (var i = 0; i < splitCount; i++) {
+						var unitResult =
+							(inputNumber % Math.pow(splitUnit, i + 1)) / Math.pow(splitUnit, i);
+						unitResult = Math.floor(unitResult);
+						if (unitResult > 0) {
+							resultArray[i] = unitResult;
+						}
+					}
+					resultArray = resultArray.reverse();
+					if (resultArray[0]) {
+						resultString = String(resultArray[0]);
+					}
+					if (resultArray[1]) {
+						resultArray[1] = "000" + resultArray[1].toString();
+						resultArray[1] = resultArray[1].slice(-4);
+						if (Number(resultArray[1].toString().substr(0, 1)) > 0) {
+							resultString = resultString + "." + resultArray[1].toString().substr(0, 1);
+						}						
+					}
+					resultString = resultString + unitWords[resultArray.length - 1];
+					return resultString;
+				} else {
+					resultString = value;
+				}
+				return resultString;
+			} catch(e) {
+				return -1;
+			}
+		}, 
+		numberToComma: function (number) {
+			try {
+				var value = Number(number);
+				return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+			} catch (e) {
+				return -1;
+			}
+		}
+	},
+    String : {
+        trimAll: function (str) {
+            if (str != null && str != '') {
+                return str.replace(/(\s*)/g, "");
+            } else {
+                return '';
+            }
+        }
+    },
+    Date: {
+        add: function (date, interval, units) {
+            var ret = new Date(date); //don't change original date
+            var checkRollover = function () { if (ret.getDate() != date.getDate()) ret.setDate(0); };
+            switch (interval.toLowerCase()) {
+                case 'year': ret.setFullYear(ret.getFullYear() + units); checkRollover(); break;
+                case 'quarter': ret.setMonth(ret.getMonth() + 3 * units); checkRollover(); break;
+                case 'month': ret.setMonth(ret.getMonth() + units); checkRollover(); break;
+                case 'week': ret.setDate(ret.getDate() + 7 * units); break;
+                case 'day': ret.setDate(ret.getDate() + units); break;
+                case 'hour': ret.setTime(ret.getTime() + units * 3600000); break;
+                case 'minute': ret.setTime(ret.getTime() + units * 60000); break;
+                case 'second': ret.setTime(ret.getTime() + units * 1000); break;
+                default: ret = undefined; break;
+            }
+            return ret;
+        }
+    },
+    SessionStorage: {
+        set: function (key, value, expire, interval) {
+            if (expire) {
+                // 만료시간 사용함.
+                value.expireDate = $OASIS.Date.add(new Date(), 'minute', interval);
+            }
+            sessionStorage.setItem(key, JSON.stringify(value));
+        },
+        get: function (key, chk) {
+            if (sessionStorage.getItem(key) != null) {
+                if (chk) {
+                    // 만료 시간 체크 여부
+                    if (new Date(JSON.parse(sessionStorage.getItem(key)).expireDate) >= new Date()) {
+                        // 만료시간 유효
+                        return JSON.parse(sessionStorage.getItem(key));
+                    } else {
+                        // 만료됨
+                        return null;
+                    }
+                } else {
+                    // 만료 시간 체크 안함
+                    return JSON.parse(sessionStorage.getItem(key));
+                }
+            } else {
+                return null;
+            }
+        },
+        remove: function (key) {
+            sessionStorage.removeItem(key);
+        },
+        clear: function () {
+            sessionStorage.clear();
+        },
+        check: function (key) {
+            if (sessionStorage.getItem(key) != null) {
+                return new Date(JSON.parse(sessionStorage.getItem(key)).expireDate) >= new Date();
+            } else {
+                return false;
+            }
+        }
+    }
+}
+
+function setA2SLog($target) {
+    try {
+        $target.find("[a2s]").each(function () {
+            if ($(this).attr("a2s") == "exposure" && !$(this).is(":hidden"))
+                $h.a2s.sendContentsLog($(this).attr("obj"), $(this).attr("opt"));
+            $(this).click(function () {
+                $h.a2s.sendClickLog($(this).attr("obj"), $(this).attr("opt"));
+            });
+        });
+    } catch (e) {
+        $target.find("[a2s]").each(function () {
+            if ($(this).attr("a2s") == "exposure" && !$(this).is(":hidden"))
+                $h.a2s.sendContentsLog($(this).attr("obj"), $(this).attr("opt"));
+            $(this).click(function () {
+                $h.a2s.sendClickLog($(this).attr("obj"), $(this).attr("opt"));
+            });
+        });
+    }
+}
