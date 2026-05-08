@@ -1,18 +1,25 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
+import { MainPage } from '../pages/Main';
+import { ChargePage } from '../pages/Charge';
 
-test('로컬 환경에서 충전 팝업으로 정상 이동하는가', async ({ page }) => {
-    // 1. 이미 로그인 후 UI가 노출되도록 수정된 로컬 HTML 접속
-    await page.goto('http://127.0.0.1:5500/Automation/public/index.html');
+test('메인 페이지에서 50,000원 결제 후 잔액 갱신 검증 (POM 적용)', async ({ page }) => {
+    // 1. 페이지 객체 초기화
+    const mainPage = new MainPage(page);
+    const chargePage = new ChargePage(page);
 
-    // 2. 메인 캐시 정보 영역이 화면에 렌더링되었는지 대기 및 검증
-    const qaTestArea = page.locator('#qa-test-area');
-    await expect(qaTestArea).toBeVisible();
+    // 2. 메인 페이지 진입 및 초기 잔액 확인
+    await mainPage.goto();
+    await mainPage.verifyCashBalance('0');
 
     await page.pause();
-    // 3. 테스트 목적에 맞게 수정해둔 data-testid로 버튼 클릭
-    const chargeBtn = page.getByTestId('main-charge-btn');
-    await chargeBtn.click();
+    // 3. 충전 팝업으로 이동
+    await mainPage.clickCharge();
 
-    // 4. 로컬에 준비된 충전 Mock 페이지로 라우팅 되었는지 검증
-    await expect(page).toHaveURL(/.*mock-charge\.html/);
+    // 4. 금액 선택, 약관 동의 및 결제 진행
+    await chargePage.selectAmount50k();
+    await chargePage.agreeToTerms();
+    await chargePage.submitPayment();
+
+    // 5. 메인 페이지 복귀 후 잔액 갱신 검증
+    await mainPage.verifyCashBalance('50,000');
 });
