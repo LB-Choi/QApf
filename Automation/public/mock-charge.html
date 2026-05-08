@@ -22,6 +22,26 @@
         .layerCashlist li { flex: 1 1 calc(25% - 8px); }
         .layerCashlist button { width: 100%; padding: 12px 0; border: 1px solid #ccc; background: #fff; font-size: 14px; cursor: pointer; }
         .layerCashlist button:hover { border-color: #333; font-weight: bold; }
+        
+        /* 💡 결제수단 메인 탭 CSS */
+        .payment_method { margin-bottom: 30px; }
+        .payMethodSec { display: flex; gap: 10px; margin-bottom: 15px; }
+        .payMethodSec button { flex: 1; padding: 15px; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 4px; font-size: 15px; font-weight: bold; transition: 0.2s;}
+        .payMethodSec button.active { border: 2px solid #111; color: #111; background-color: #f8f9fa; }
+        
+        /* 💡 결제수단별 상세 영역 CSS */
+        .detail_section { display: none; background: #f8f9fa; padding: 20px; border: 1px solid #dee2e6; border-radius: 4px; }
+        .detail_section.active { display: block; } /* active 클래스가 붙으면 화면에 표시됨 */
+        
+        .sub_btn_group { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
+        .sub_btn_group button { padding: 10px 20px; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 4px; font-size: 14px; }
+        .sub_btn_group button.active { border: 2px solid #111; font-weight: bold; background: #fdfdfd; }
+        
+        .input_group { display: flex; align-items: center; gap: 10px; }
+        .input_group label { font-size: 14px; font-weight: bold; }
+        .input_group select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; outline: none; cursor: pointer; }
+        .input_group input[type="text"] { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; outline: none; }
+
         .agreement { border-top: 1px solid #eee; padding-top: 20px; margin-bottom: 20px;}
         .checkSec { margin-bottom: 15px; font-size: 14px; display: flex; align-items: center; gap: 8px; font-weight: bold;}
         .checkSec input { width: 18px; height: 18px; cursor: pointer; }
@@ -30,6 +50,10 @@
     </style>
 </head>
 <body>
+    <div id="toastMessage" style="display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #ff3b30; color: #fff; padding: 12px 25px; border-radius: 8px; font-weight: bold; z-index: 9999; box-shadow: 0 4px 10px rgba(0,0,0,0.2); align-items: center; gap: 20px;">
+        <span id="toastText">메시지 내용</span>
+        <button id="toastConfirmBtn" style="background: rgba(255,255,255,0.3); border: none; color: #fff; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;" data-testid="toast-confirm-btn">확인</button>
+    </div>
 
     <div class="wrapper">
         <div class="header">
@@ -43,28 +67,76 @@
         <div class="content">
             <div class="cntsTit">충전</div>
             <div class="inputTxtSec">
-                <input id="txtTotalPayAmount" type="text" inputmode="numeric" value="0" placeholder="금액입력">
+                <input id="txtTotalPayAmount" type="text" inputmode="numeric" value="0" placeholder="금액입력" data-testid="charge-input">
             </div>
             <ul class="layerCashlist">
-                <li><button type="button" data-amount="custom">직접 입력</button></li>
-                <li><button type="button" data-amount="1000">1,000원</button></li>
-                <li><button type="button" data-amount="3000">3,000원</button></li>
-                <li><button type="button" data-amount="5000">5,000원</button></li>
-                <li><button type="button" data-amount="10000">10,000원</button></li>
-                <li><button type="button" data-amount="30000">30,000원</button></li>
-                <li><button type="button" data-amount="50000">50,000원</button></li>
+                <li><button type="button" data-amount="custom" data-testid="custombtn">직접 입력</button></li>
+                <li><button type="button" data-amount="1000" data-testid="1kbtn">1,000원</button></li>
+                <li><button type="button" data-amount="3000" data-testid="3kbtn">3,000원</button></li>
+                <li><button type="button" data-amount="5000" data-testid="5kbtn">5,000원</button></li>
+                <li><button type="button" data-amount="10000" data-testid="10kbtn">10,000원</button></li>
+                <li><button type="button" data-amount="30000" data-testid="30kbtn">30,000원</button></li>
+                <li><button type="button" data-amount="50000" data-testid="50kbtn">50,000원</button></li>
+                <li><button type="button" data-amount="100000" data-testid="100kbtn">100,000원</button></li>
             </ul>
+
+            <div class="payment_method">
+                <div class="cntsTit">결제수단</div>
+                
+                <div class="payMethodSec">
+                    <button type="button" class="active" data-method="card" data-testid="method-card">신용/체크카드</button>
+                    <button type="button" data-method="easy" data-testid="method-easy">간편결제</button>
+                    <button type="button" data-method="phone" data-testid="method-phone">휴대폰</button>
+                </div>
+
+                <div id="detail-card" class="detail_section active">
+                    <div class="sub_btn_group">
+                        <button type="button" class="active" data-testid="card-shinhan">신한</button>
+                        <button type="button" data-testid="card-kb">국민</button>
+                        <button type="button" data-testid="card-hyundai">현대</button>
+                        <button type="button" data-testid="card-woori">우리</button>
+                        <button type="button" data-testid="card-samsung">삼성</button>
+                    </div>
+                    <div class="input_group">
+                        <label>할부기간</label>
+                        <select data-testid="card-installment">
+                            <option value="1">일시불</option>
+                            <option value="2">02개월(무이자)</option>
+                            <option value="3">03개월(무이자)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="detail-easy" class="detail_section">
+                    <div class="sub_btn_group">
+                        <button type="button" class="active" data-testid="easy-naver">네이버페이</button>
+                        <button type="button" data-testid="easy-kakao">카카오페이</button>
+                        <button type="button" data-testid="easy-toss">토스페이</button>
+                    </div>
+                </div>
+
+                <div id="detail-phone" class="detail_section">
+                    <div class="input_group">
+                        <select data-testid="phone-telecom">
+                            <option value="skt">SKT</option>
+                            <option value="kt">KT</option>
+                            <option value="lgu">LGU+</option>
+                        </select>
+                        <input type="text" id="phoneNumInput" maxlength="11" placeholder="휴대폰 번호 입력 (- 제외 11자리)" data-testid="phone-number" inputmode="numeric">
+                    </div>
+                </div>
+            </div>
 
             <div class="agreement">
                 <div class="checkSec">
-                    <input type="checkbox" id="chkAgreement">
+                    <input type="checkbox" id="chkAgreement" data-testid="agreement-checkbox">
                     <label for="chkAgreement" style="cursor: pointer;">충전 및 결제 서비스 약관에 동의합니다.</label>
                 </div>
             </div>
         </div>
 
         <div class="footer">
-            <p class="payBt"><button type="button" id="btnSubmitPayment" class="bt1">결제하기</button></p>
+            <p class="payBt"><button type="button" id="btnSubmitPayment" class="bt1" data-testid="submit-payment-btn">결제하기</button></p>
         </div>
     </div>
 
@@ -77,13 +149,84 @@
             const cashRemainField = document.getElementById('cashRemain');
             const cashAfterField = document.getElementById('cashAfter');
             const agreementCheckbox = document.getElementById('chkAgreement');
+            const toast = document.getElementById('toastMessage');
+            const toastText = document.getElementById('toastText');
+            const toastConfirmBtn = document.getElementById('toastConfirmBtn');
             const submitBtn = document.getElementById('btnSubmitPayment');
+            
+            let toastAction = null; // 확인 버튼을 눌렀을 때 실행할 함수 저장소
 
+            function showToast(message, isSuccess = false, callback = null) {
+                toastText.innerText = message;
+                toast.style.background = isSuccess ? '#28a745' : '#ff3b30'; // 성공은 초록, 실패는 빨강
+                toast.style.display = 'flex'; // flex로 설정해 텍스트와 버튼을 나란히 배치
+                toastAction = callback; // 전달받은 다음 동작 저장
+            }
+
+            // 확인 버튼 클릭 이벤트
+            toastConfirmBtn.addEventListener('click', () => {
+                toast.style.display = 'none'; // 1. 알림창 닫기
+                if (toastAction) {
+                    toastAction(); // 2. 저장해둔 다음 동작이 있다면 실행
+                    toastAction = null; // 실행 후 초기화
+                }
+            });
+            
             // 초기값 세팅
             cashRemainField.innerText = currentCash.toLocaleString() + '원';
             cashAfterField.innerText = currentCash.toLocaleString() + '원';
 
-            // 1. 금액 버튼 클릭 이벤트
+            // ==========================================
+            // 💡 1. 결제수단 탭 전환 로직
+            // ==========================================
+            const methodBtns = document.querySelectorAll('.payMethodSec button');
+            const detailSections = {
+                'card': document.getElementById('detail-card'),
+                'easy': document.getElementById('detail-easy'),
+                'phone': document.getElementById('detail-phone')
+            };
+
+            methodBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // 메인 탭 활성화 처리
+                    methodBtns.forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+
+                    // 모든 상세 섹션 숨기기
+                    Object.values(detailSections).forEach(sec => sec.classList.remove('active'));
+                    
+                    // 클릭한 탭에 맞는 상세 섹션만 보여주기
+                    const method = e.target.getAttribute('data-method');
+                    if(detailSections[method]) {
+                        detailSections[method].classList.add('active');
+                    }
+                });
+            });
+
+            // ==========================================
+            // 💡 2. 하위 버튼 (카드종류, 간편결제종류) 활성화 로직
+            // ==========================================
+            document.querySelectorAll('.sub_btn_group').forEach(group => {
+                const subBtns = group.querySelectorAll('button');
+                subBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        subBtns.forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                    });
+                });
+            });
+
+            // ==========================================
+            // 💡 3. 휴대폰 번호 입력창 제어 (숫자만 11자리)
+            // ==========================================
+            const phoneInput = document.getElementById('phoneNumInput');
+            phoneInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, ''); // 숫자 외 입력 차단
+            });
+
+            // ==========================================
+            // 💡 4. 금액 입력 및 잔액 계산 로직 (기존과 동일)
+            // ==========================================
             document.querySelectorAll('.layerCashlist button').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const amountType = e.target.getAttribute('data-amount');
@@ -99,7 +242,6 @@
                 });
             });
 
-            // 2. 직접 입력 (키보드 및 콤마) 이벤트
             inputField.addEventListener('input', (e) => {
                 let val = e.target.value.replace(/[^0-9]/g, '');
                 if (val === '') {
@@ -112,22 +254,44 @@
                 cashAfterField.innerText = (currentCash + selectedAmount).toLocaleString() + '원';
             });
 
-            // 3. 결제 버튼 클릭 이벤트 (Alert 로직)
+            // ==========================================
+            // 💡 5. 결제 및 검증 로직
+            // ==========================================
             submitBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 
+                if (detailSections['phone'].classList.contains('active')) {
+                    if (phoneInput.value.length !== 11) {
+                        // 에러 팝업: 확인을 누르면 전화번호 입력창으로 포커스
+                        showToast('휴대폰 번호 11자리를 정확히 입력해주세요.', false, () => {
+                            phoneInput.focus();
+                        });
+                        return;
+                    }
+                }
+
                 if (!agreementCheckbox.checked) {
-                    alert('충전 및 결제 서비스 약관에 동의해주세요.');
-                    return; // 함수 종료
+                    // 단순 에러 팝업
+                    showToast('충전 및 결제 서비스 약관에 동의해주세요.');
+                    return; 
                 }
 
                 if (selectedAmount === 0) {
-                    alert('충전할 금액을 입력하거나 선택해주세요.');
-                    inputField.focus();
-                    return; // 함수 종료
+                    // 에러 팝업: 확인을 누르면 금액 입력창으로 포커스
+                    showToast('충전할 금액을 입력하거나 선택해주세요.', false, () => {
+                        inputField.focus();
+                    });
+                    return; 
                 }
 
-                alert('결제가 완료되었습니다. (테스트 성공!)');
+                // 성공 시 로컬스토리지 저장
+                currentCash += selectedAmount;
+                localStorage.setItem('nexon_cash', currentCash.toString());
+                
+                // 성공 팝업: 확인을 누르면 메인 페이지로 이동
+                showToast('결제가 완료되었습니다. 확인을 누르면 메인으로 이동합니다.', true, () => {
+                    window.location.href = './index.html'; 
+                });
             });
         });
     </script>
