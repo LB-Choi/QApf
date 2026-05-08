@@ -31,7 +31,7 @@ Production Safety (Zero-Impact): 실서버 트래픽 부하 및 결제 데이터
 
 Stable Element Selection: UI 레이아웃이나 CSS 클래스 변경으로 인한 영향이 없도록 `data-testid` 속성 기반의 안정적인 셀렉터 설계
 
-Page Object Model (POM): 페이지 구조(Locator)와 테스트 시나리오(Action)를 객체지향적으로 분리하여 스크립트 유지보수성 극대화
+Page Object Model (POM): 페이지 구조(Locator)와 테스트 시나리오를 객체지향적으로 분리하여 스크립트 유지보수성 극대화
 
 Negative Testing: 약관 미동의, 금액 미입력 등의 예외 상황에서 발생하는 알림창(Toast UI)의 에러 메시지 텍스트까지 검증
 
