@@ -23,6 +23,8 @@ export class ChargePage {
     readonly submitBtn: Locator;
     readonly chargeInput: Locator;
 
+    readonly toastText: Locator;
+
     constructor(page: Page) {
         this.page = page;
         
@@ -45,6 +47,8 @@ export class ChargePage {
         this.agreementCheckbox = page.getByTestId('agreement-checkbox');
         this.submitBtn = page.getByTestId('submit-payment-btn');
         this.chargeInput = page.getByTestId('charge-input');
+
+        this.toastText = page.locator('#toastText');
     }
 
     // ==========================================
