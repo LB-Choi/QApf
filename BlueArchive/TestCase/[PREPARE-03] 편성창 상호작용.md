@@ -1,6 +1,5 @@
 [PREPARE-03] 편성창 상호작용
-Status: 🟢 Pass / 🔴 Fail / 🟡 In-Progress / ⚪ Not Run
-
+Status: 🟢 Pass
 1. 개요 (Summary)
 + 총력전(호버크래프트)의 편성 창에서의 상호작용 테스트
 
