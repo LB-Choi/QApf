@@ -1,0 +1,1 @@
+PS.callback.loginSessionGetInfo({"d":[{"isLogin":true,"isMembership":true,"mainAuthLevel":2,"age":30,"youth":false}]});

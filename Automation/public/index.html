@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>넥슨 - 로컬 QA 환경 (메인)</title>
+  
+  <!-- 원본 CSS (경로에 맞게 수정 필요 시 수정) -->
+  <link rel="stylesheet" type="text/css" href="./index_files/main.css">
+  
+  <style>
+    /* 원본 스크립트를 제거했으므로, 로그인 후 UI를 강제로 띄우기 위한 최소한의 조치 */
+    .login { display: none !important; }
+    .logged.stateInfo { display: block !important; }
+  </style>
+</head>
+<body style="padding: 50px;"> <!-- 레이아웃 확인을 위한 임시 패딩 -->
+
+  <div class="myInfo" style="position: relative; width: 338px;"> <!-- 원본 위젯 크기 강제 -->
+    <div class="title"><h2>추천게임</h2></div>
+    
+    <!-- 로그인 전 UI (숨김 처리됨) -->
+    <div class="login">
+      <!-- 기존 로그인 관련 태그들 생략 -->
+    </div>
+
+    <!-- 로그인 후 UI (강제 표시됨, 테스트 타겟) -->
+    <div class="logged stateInfo" id="qa-test-area">
+      <ul class="tab">
+        <li class="tabInfo"><a href="#info">캐시/보안</a></li>
+        <li class="tabNews"><a href="#news">MY게임 소식</a></li>
+      </ul>
+      <div class="info" id="info">
+        <div class="cash">
+          <h3 class="acchidden">캐시</h3>
+          <ul>
+            <li>
+              <a href="#" id="btnCash">넥슨캐시 
+                <!-- 초기 잔액 0원, data-testid 추가 -->
+                <span class="stateCash nexoncash" data-testid="current-cash">0</span>
+              </a>
+            </li>
+            <li>
+              플레이포인트
+              <span class="tooltip">
+                <a href="#" class="btTooltip"><span class="icon"></span></a>
+              </span>
+              <span class="stateCash playpoint">0</span>
+            </li>
+          </ul>
+          <div class="bt">
+            <!-- disabled 제거, 로컬 Mock 주소로 변경, data-testid 추가 -->
+            <a id="btnCharge" href="./mock-charge.html" data-testid="main-charge-btn">충전</a>
+            <a id="autoCharge" href="./mock-autocharge.html" data-testid="main-autocharge-btn">자동충전<span>최대 +5%</span></a>
+          </div>
+        </div>
+        <div class="security">
+          <h3 class="acchidden">보안</h3>
+          <p class="securityA" id="pSecurityLevel">
+            <span>A</span><span>등급</span><span>정상</span>
+          </p>
+          <div class="msg" id="dvHomeSecurityMsg"></div>
+          <div class="bt">
+            <a href="#">보안센터</a>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 뉴스 탭 (숨김 처리됨) -->
+      <div class="news newsNone" id="news" style="display: none;">
+        <!-- 기존 뉴스 관련 태그들 생략 -->
+      </div>
+    </div>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. localStorage에서 캐시 잔액 불러오기 (최초 접속 시 0)
+        const currentCash = parseInt(localStorage.getItem('nexon_cash') || '0', 10);
+        
+        // 2. data-testid="current-cash" 요소에 금액 업데이트
+        const cashSpan = document.querySelector('[data-testid="current-cash"]');
+        if(cashSpan) {
+            cashSpan.innerText = currentCash.toLocaleString();
+        }
+    });
+  </script>
+</body>
+</html>

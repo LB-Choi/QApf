@@ -1,0 +1,24 @@
+{
+  "name": "qapf",
+  "version": "1.0.0",
+  "description": "> **Jira + Zephyr 환경을 GitHub 환경으로 재구성하여 체계적인 테스트 프로세스를 증명하는 포트폴리오입니다.**본 저장소는 상용 툴 사용이 제한적인 환경에서 GitHub를 BTS(Bug Tracking System)로 활용하고, Playwright를 이용한 E2E 자동화를 구축하여 체계적인 QA 프로세스를 시뮬레이션한 프로젝트입니다.",
+  "main": "index.js",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@types/node": "^25.6.0",
+    "serve": "^14.2.6"
+  },
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LB-Choi/QApf.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/LB-Choi/QApf/issues"
+  },
+  "homepage": "https://github.com/LB-Choi/QApf#readme"
+}
