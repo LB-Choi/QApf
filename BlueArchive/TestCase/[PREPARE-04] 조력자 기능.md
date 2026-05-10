@@ -1,5 +1,5 @@
 [PREPARE-04] 조력자 기능
-Status: 🟢 Pass / 🔴 Fail / 🟡 In-Progress / ⚪ Not Run
+Status: 🟢 Pass
 
 1. 개요 (Summary)
 + 총력전(호버크래프트)의 편성 창까지의 상호작용 테스트
@@ -12,7 +12,7 @@ Status: 🟢 Pass / 🔴 Fail / 🟡 In-Progress / ⚪ Not Run
 
 | Step | Action | Test Data | Expected Result | Actual Result |
 |:---:|---|---|---|:---:|
-| 1 | [조력자] 탭 선택 | - | 조력자 목록 UI 정상 노출 | 🟢 Pass |
+| 1 | [조력자] 탭 선택 | - | 친구 및 서클원이 설정한 조력자 목록 UI 노출 | 🟢 Pass |
 | 2 | 임의의 조력자 학생 선택 | - | 편성에 해당 조력자 학생 추가 | 🟢 Pass |
 | 3 | 2명 이상의 조력자 학생을 편성한 상태로 [확인] 버튼 선택 | - | 조력자 인원 한계 알림 팝업 UI 노출 | 🟢 Pass |
 | 4 | 1명의 조력자 학생을 편성한 상태로 [확인] 버튼 선택 | - | 편성창 내 학생 모델링 정상 노출 | 🟢 Pass |
