@@ -15,6 +15,7 @@ Status: 🟢 Pass / 🔴 Fail / 🟡 In-Progress / ⚪ Not Run
 | 2 | 잡고 있는 학생 Drag | - | Drag한 방향으로 해당 학생 이동 | 🟢 Pass |
 | 3 | 잡고 있는 학생을 다른 학생 위치에 Drop | - | 기존 학생과 Drop한 위치의 학생의 위치 교체 | 🟢 Pass |
 | 4 | [⇄STRIKER] 버튼 선택 | - | 편성된 SPECIAL 학생 모델링 노출 | 🟢 Pass |
+| 5 | [⇄SPECIAL] 버튼 선택 | - | 편성된 STRIKER 학생 모델링 노출 | 🟢 Pass |
 
 4. 추적성 및 결함 (Traceability)
 + 
